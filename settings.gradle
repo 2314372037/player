@@ -1,2 +1,3 @@
 include ':app'
 rootProject.name = "播放器"
+include ':FFmpegSdk'

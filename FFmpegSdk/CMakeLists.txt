@@ -3,7 +3,7 @@
 
 # Sets the minimum version of CMake required to build the native library.
 
-cmake_minimum_required(VERSION 3.10.2)
+cmake_minimum_required(VERSION 3.22.1)
 
 project("player")
 
@@ -19,9 +19,10 @@ find_library( # Sets the name of the path variable.
         log)
 
 add_library(
-        media_player
+        media_handler
         SHARED
-        src/main/cpp/media_player.cpp)
+        src/main/cpp/media_player.cpp
+        src/main/cpp/media_frame_get.cpp)
 
 add_library(libavcodec
         SHARED
@@ -73,7 +74,7 @@ set_target_properties(libswscale
         ${LIBS_DIR}/libswscale.so)
 
 target_link_libraries(
-        media_player
+        media_handler
         libavcodec
         libavdevice
         libavfilter
