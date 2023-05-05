@@ -1,13 +1,19 @@
 package com.zhanghao.player;
 
+import android.graphics.SurfaceTexture;
+import android.hardware.Camera;
+import android.hardware.camera2.params.OutputConfiguration;
+import android.hardware.camera2.params.SessionConfiguration;
 import android.os.Environment;
 import android.util.ArraySet;
 import android.view.Surface;
+import android.view.TextureView;
 
 import com.zh.ffmpegsdk.VideoPlayer;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
