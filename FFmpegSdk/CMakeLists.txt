@@ -21,7 +21,8 @@ find_library( # Sets the name of the path variable.
 add_library(
         media_handler
         SHARED
-        src/main/cpp/media_player.cpp
+        src/main/cpp/media_ffmpeg_method.cpp
+        src/main/cpp/media_player_20.cpp
         src/main/cpp/media_frame_get.cpp)
 
 add_library(libavcodec

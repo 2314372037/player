@@ -29,7 +29,7 @@ namespace mediaPlayer {
         return env->NewStringUTF(str);
     }
 
-    bool isRunning = true;
+    bool isRun = true;
     //当前播放时间
     long m_CurTimeStamp = 0;
     //播放的起始时间
@@ -39,6 +39,7 @@ namespace mediaPlayer {
     jobject surface;
     //本地网络路径
     char *path;
+    bool isLoop;
 
     void updateTimeStamp(AVFormatContext *avFormatContext, AVFrame *avFrame, int video_index) {
         //参照 ffplay
@@ -49,10 +50,11 @@ namespace mediaPlayer {
         } else {
             m_CurTimeStamp = 0;
         }
-        m_CurTimeStamp = (int64_t) ((m_CurTimeStamp * av_q2d(avFormatContext->streams[video_index]->time_base)) * 1000);
+        m_CurTimeStamp = (int64_t) (
+                (m_CurTimeStamp * av_q2d(avFormatContext->streams[video_index]->time_base)) * 1000);
     }
 
-    void* runStart(void *arg) {
+    void *runStart(void *arg) {
         JNIEnv *env;
         int mNeedDetach = JNI_FALSE;//线程是否需要分离jvm
         //获取当前native线程是否有没有被附加到jvm环境中
@@ -117,7 +119,7 @@ namespace mediaPlayer {
             return nullptr;
         }
 
-        jmethodID javaCallBack = env->GetMethodID(VideoPlayerClass, "frameDataCallBack", "([B[III)V");
+        jmethodID javaCallBack = env->GetMethodID(VideoPlayerClass, "frameDataCallBack", "([BII)V");
         if (javaCallBack == nullptr) {
             LOGD("未找到回调函数");
             g_vm->DetachCurrentThread();
@@ -151,8 +153,8 @@ namespace mediaPlayer {
                                          WINDOW_FORMAT_RGBA_8888);
 
         m_StartTimeStamp = (av_gettime() / 1000) - m_CurTimeStamp;
-        isRunning = true;
-        while (av_read_frame(avFormatContext, avPacket) >= 0 && isRunning) {
+        isRun = true;
+        while (av_read_frame(avFormatContext, avPacket) >= 0 && isRun) {
             if (avPacket->stream_index == video_index) {
                 if (avcodec_send_packet(avCodecContext, avPacket) >= 0) {
                     if (avcodec_receive_frame(avCodecContext, avFrame) >= 0) {
@@ -162,9 +164,12 @@ namespace mediaPlayer {
                         jsize linesize_size = sizeof(avFrame->linesize);
                         jbyteArray dataByteArray = env->NewByteArray(data_size);
                         jintArray lineSizeIntArray = env->NewIntArray(linesize_size);
-                        env->SetByteArrayRegion(dataByteArray, 0, data_size, (jbyte *) avFrame->data);
-                        env->SetIntArrayRegion(lineSizeIntArray, 0, linesize_size, (jint *) avFrame->linesize);
-                        env->CallVoidMethod(g_obj, javaCallBack, dataByteArray,lineSizeIntArray,avFrame->width,avFrame->height);
+                        env->SetByteArrayRegion(dataByteArray, 0, data_size,
+                                                (jbyte *) avFrame->data);
+                        env->SetIntArrayRegion(lineSizeIntArray, 0, linesize_size,
+                                               (jint *) avFrame->linesize);
+                        env->CallVoidMethod(g_obj, javaCallBack, dataByteArray, avFrame->width,
+                                            avFrame->height);
                         env->DeleteLocalRef(dataByteArray);
                         env->DeleteLocalRef(lineSizeIntArray);
 
@@ -190,7 +195,8 @@ namespace mediaPlayer {
                         long currentSystemTime = (av_gettime() / 1000);
                         long timeDiff = currentSystemTime - m_StartTimeStamp;
                         if (m_CurTimeStamp > timeDiff) {
-                            auto sleepTime = static_cast<unsigned int>(m_CurTimeStamp -timeDiff);//ms
+                            auto sleepTime = static_cast<unsigned int>(m_CurTimeStamp -
+                                                                       timeDiff);//ms
                             av_usleep(sleepTime * 1000);
                         }
                     }
@@ -206,14 +212,17 @@ namespace mediaPlayer {
         avcodec_close(avCodecContext);
         avcodec_free_context(&avCodecContext);
         avformat_free_context(avFormatContext);
+        isRun = false;
+        m_CurTimeStamp = 0;
+        m_StartTimeStamp = -1;
         LOGD("结束执行");
         return nullptr;
     }
 
     extern "C" JNIEXPORT void JNICALL
-    Java_com_zh_ffmpegsdk_VideoPlayer_start(JNIEnv *env, jobject obj, jstring source, jobject surface1) {
+    Java_com_zh_ffmpegsdk_MediaPlayer20_nativeStart(JNIEnv *env, jobject obj, jstring source,
+                                                    jobject surface1) {
         pthread_t pthread_ptr;
-
         //以下是其他线程里回调示例，jni不允许其他线程里直接findClass调回调方法
         //JavaVM是虚拟机在jni里的表示
         env->GetJavaVM(&g_vm);
@@ -226,14 +235,20 @@ namespace mediaPlayer {
     }
 
     extern "C" JNIEXPORT void JNICALL
-    Java_com_zh_ffmpegsdk_VideoPlayer_stop(JNIEnv *env, jobject) {
-        isRunning = false;
+    Java_com_zh_ffmpegsdk_MediaPlayer20_nativeSetLoop(JNIEnv *env, jobject, jboolean isLoop1) {
+        isLoop = isLoop1;
+    }
+
+    extern "C" JNIEXPORT void JNICALL
+    Java_com_zh_ffmpegsdk_MediaPlayer20_nativeReset(JNIEnv *env, jobject) {
+        isRun = false;
+        isLoop = false;
         m_CurTimeStamp = 0;
         m_StartTimeStamp = -1;
     }
 
     extern "C" JNIEXPORT jstring JNICALL
-    Java_com_zh_ffmpegsdk_VideoPlayer_getVersion(JNIEnv *env, jobject) {
+    Java_com_zh_ffmpegsdk_MediaPlayer20_nativeGetInfo(JNIEnv *env, jobject) {
         const char *info = avcodec_configuration();
         return charToJString(env, info);
     }

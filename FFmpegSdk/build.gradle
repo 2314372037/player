@@ -13,6 +13,12 @@ android {
         }
     }
 
+    android.libraryVariants.all{
+        variant -> variant.outputs.all {
+            outputFileName = "ffsdk.aar"
+        }
+    }
+
     buildTypes {
         release {
             minifyEnabled false
@@ -29,6 +35,7 @@ android {
             version "3.22.1"
         }
     }
+    ndkVersion '20.0.5594570'
 }
 
 dependencies {

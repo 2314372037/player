@@ -39,6 +39,8 @@ namespace mediaFrameGet {
     //本地网络路径
     char *path;
 
+    jmethodID stopJavaCallBack;
+
     void updateTimeStamp(AVFormatContext *avFormatContext, AVFrame *avFrame, int video_index) {
         //参照 ffplay
         if (avFrame->pkt_dts != AV_NOPTS_VALUE) {
@@ -48,10 +50,20 @@ namespace mediaFrameGet {
         } else {
             m_CurTimeStamp = 0;
         }
-        m_CurTimeStamp = (int64_t) ((m_CurTimeStamp * av_q2d(avFormatContext->streams[video_index]->time_base)) * 1000);
+        m_CurTimeStamp = (int64_t) (
+                (m_CurTimeStamp * av_q2d(avFormatContext->streams[video_index]->time_base)) * 1000);
     }
 
-    void* runStart(void *arg) {
+    int checkExc(JNIEnv *env) {
+        if (env->ExceptionCheck()) {
+            env->ExceptionDescribe(); // writes to logcat
+            env->ExceptionClear();
+            return 1;
+        }
+        return 0;
+    }
+
+    void *runStart(void *arg) {
         JNIEnv *env;
         int mNeedDetach = JNI_FALSE;//线程是否需要分离jvm
         //获取当前native线程是否有没有被附加到jvm环境中
@@ -116,28 +128,42 @@ namespace mediaFrameGet {
             return nullptr;
         }
 
-        jmethodID javaCallBack = env->GetMethodID(videoFrameClass, "frameDataCallBack", "([B[III)V");
-        if (javaCallBack == nullptr) {
-            LOGD("未找到回调函数");
+        jmethodID frameDataCallBack = env->GetMethodID(videoFrameClass, "frameDataCallBack",
+                                                       "([BII)V");
+        if (frameDataCallBack == nullptr) {
+            LOGD("未找到回调函数frameDataCallBack");
             g_vm->DetachCurrentThread();
             return nullptr;
         }
 
+        jmethodID startCallBack = env->GetStaticMethodID(videoFrameClass, "startCallBack", "()V");
+        if (startCallBack == nullptr) {
+            LOGD("未找到回调函数startCallBack");
+            g_vm->DetachCurrentThread();
+            return nullptr;
+        }
 
-        //AVRational avRational = avFormatContext->streams[video_index]->avg_frame_rate;
-        //int frame_rate = avRational.num / avRational.den;
+        jmethodID stopCallBack = env->GetMethodID(videoFrameClass, "stopCallBack", "()V");
+        if (stopCallBack == nullptr) {
+            LOGD("未找到回调函数stopCallBack");
+            g_vm->DetachCurrentThread();
+            return nullptr;
+        }
 
-        SwsContext *sws_context = sws_getContext(
-                avCodecContext->width,
-                avCodecContext->height,
-                avCodecContext->pix_fmt,
-                avCodecContext->width,
-                avCodecContext->height,
-                AV_PIX_FMT_RGBA,
-                SWS_POINT,
-                nullptr,
-                nullptr,
-                nullptr);
+        // 创建图像转换上下文
+        SwsContext *swsContext = sws_getContext(
+                avCodecContext->width, avCodecContext->height, AV_PIX_FMT_YUV420P,
+                avCodecContext->width, avCodecContext->height, AV_PIX_FMT_RGB565,
+                0, nullptr, nullptr, nullptr
+        );
+
+        // 分配目标RGB帧
+        AVFrame *rgbFrame = av_frame_alloc();
+        int rgbBufferSize = av_image_get_buffer_size(AV_PIX_FMT_RGB565, avCodecContext->width,
+                                                     avCodecContext->height, 1);
+        auto *rgbBuffer = static_cast<uint8_t *>(av_malloc(rgbBufferSize));
+
+        env->CallStaticVoidMethod(videoFrameClass, startCallBack);
 
         m_StartTimeStamp = (av_gettime() / 1000) - m_CurTimeStamp;
         isRunning = true;
@@ -147,37 +173,40 @@ namespace mediaFrameGet {
                     if (avcodec_receive_frame(avCodecContext, avFrame) >= 0) {
                         updateTimeStamp(avFormatContext, avFrame, video_index);
 
-                        jsize data_size = sizeof(avFrame->data);
-                        jsize linesize_size = sizeof(avFrame->linesize);
-                        jbyteArray dataByteArray = env->NewByteArray(data_size);
-                        jintArray lineSizeIntArray = env->NewIntArray(linesize_size);
-                        env->SetByteArrayRegion(dataByteArray, 0, data_size, (jbyte *) avFrame->data);
-                        env->SetIntArrayRegion(lineSizeIntArray, 0, linesize_size, (jint *) avFrame->linesize);
-                        env->CallVoidMethod(g_obj, javaCallBack, dataByteArray,lineSizeIntArray,avFrame->width,avFrame->height);
-                        env->DeleteLocalRef(dataByteArray);
-                        env->DeleteLocalRef(lineSizeIntArray);
+//                        auto pixelFormat = static_cast<AVPixelFormat>(avFrame->format);
+//                        const char* pixelFormatName = av_get_pix_fmt_name(pixelFormat);
+//                        LOGD("格式：%s", pixelFormatName);
 
-                        //下面是处理rgb数据相关
-//                    sws_scale(sws_context, (const uint8_t *const *) avFrame->data,
-//                              avFrame->linesize, 0,
-//                              avFrame->height, rgb_avFrame->data, rgb_avFrame->linesize);
-//                    auto *dst = (uint8_t *) aNativeWindowBuffer.bits;
-//                    //拿到一行有多少个字节 RGBA
-//                    int destStride = aNativeWindowBuffer.stride * 4;
-//                    //像素数据的首地址
-//                    uint8_t *data = rgb_avFrame->data[0];
-//                    //实际内存一行数量
-//                    int srcStride = rgb_avFrame->linesize[0];
-//                    for (int i = 0; i < avCodecContext->height; ++i) {
-//                        //将rgb_frame中每一行的数据复制给nativewindow
-//                        memcpy(dst + i * destStride, data + i * srcStride, srcStride);
-//                    }
+                        // 分配目标RGB帧
+                        av_image_fill_arrays(rgbFrame->data, rgbFrame->linesize, rgbBuffer,
+                                             AV_PIX_FMT_RGB565, avFrame->width, avFrame->height, 1);
+
+                        // 进行颜色空间转换
+                        sws_scale(swsContext, avFrame->data, avFrame->linesize, 0, avFrame->height,
+                                  rgbFrame->data, rgbFrame->linesize);
+
+//                        if (env->ExceptionOccurred()) {
+//                            LOGD("检测到异常p0");
+//                            //清除异常
+//                            env->ExceptionClear();
+//                        }
+
+                        // 在此处可以访问转换后的RGB帧数据 rgbFrame->data
+                        jsize linesize = rgbFrame->linesize[0];
+                        jsize data_size = linesize * avFrame->height;
+                        jbyteArray dataByteArray = env->NewByteArray(data_size);
+                        env->SetByteArrayRegion(dataByteArray, 0, data_size,
+                                                (jbyte *) rgbFrame->data[0]);
+                        env->CallVoidMethod(g_obj, frameDataCallBack, dataByteArray, avFrame->width,
+                                            avFrame->height);
+                        env->DeleteLocalRef(dataByteArray);
 
                         //做延时处理
                         long currentSystemTime = (av_gettime() / 1000);
                         long timeDiff = currentSystemTime - m_StartTimeStamp;
                         if (m_CurTimeStamp > timeDiff) {
-                            auto sleepTime = static_cast<unsigned int>(m_CurTimeStamp -timeDiff);//ms
+                            auto sleepTime = static_cast<unsigned int>(m_CurTimeStamp -
+                                                                       timeDiff);//ms
                             av_usleep(sleepTime * 1000);
                         }
                     }
@@ -185,20 +214,29 @@ namespace mediaFrameGet {
             }
             av_packet_unref(avPacket);
         }
-        if (mNeedDetach) {
-            g_vm->DetachCurrentThread();
-        }
+        // 清理资源
+        av_frame_free(&rgbFrame);
+        av_free(rgbBuffer);
+        sws_freeContext(swsContext);
+
         av_frame_free(&avFrame);
         av_frame_free(&rgb_avFrame);
         avcodec_close(avCodecContext);
         avcodec_free_context(&avCodecContext);
         avformat_free_context(avFormatContext);
+
+        if (stopJavaCallBack != nullptr) {
+            env->CallVoidMethod(g_obj, stopJavaCallBack);
+        }
+        if (mNeedDetach) {
+            g_vm->DetachCurrentThread();
+        }
         LOGD("结束执行");
         return nullptr;
     }
 
     extern "C" JNIEXPORT void JNICALL
-    Java_com_zh_ffmpegsdk_VideoFrame_start(JNIEnv *env, jobject obj, jstring source) {
+    Java_com_zh_ffmpegsdk_MediaFrameGet_start(JNIEnv *env, jobject obj, jstring source) {
         pthread_t pthread_ptr;
 
         //以下是其他线程里回调示例，jni不允许其他线程里直接findClass调回调方法
@@ -213,14 +251,14 @@ namespace mediaFrameGet {
     }
 
     extern "C" JNIEXPORT void JNICALL
-    Java_com_zh_ffmpegsdk_VideoFrame_stop(JNIEnv *env, jobject) {
+    Java_com_zh_ffmpegsdk_MediaFrameGet_stop(JNIEnv *env, jobject) {
         isRunning = false;
         m_CurTimeStamp = 0;
         m_StartTimeStamp = -1;
     }
 
     extern "C" JNIEXPORT jstring JNICALL
-    Java_com_zh_ffmpegsdk_VideoFrame_getVersion(JNIEnv *env, jobject) {
+    Java_com_zh_ffmpegsdk_MediaFrameGet_getVersion(JNIEnv *env, jobject) {
         const char *info = avcodec_configuration();
         return charToJString(env, info);
     }
