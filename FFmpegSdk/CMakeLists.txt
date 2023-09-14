@@ -23,7 +23,8 @@ add_library(
         SHARED
         src/main/cpp/media_ffmpeg_method.cpp
         src/main/cpp/media_player_20.cpp
-        src/main/cpp/media_frame_get.cpp)
+        src/main/cpp/media_frame_get.cpp
+        src/main/cpp/YuvUtils.cpp)
 
 add_library(libavcodec
         SHARED

@@ -6,6 +6,8 @@
 #include <android/bitmap.h>
 #include <unistd.h>
 #include <pthread.h>
+#include "libavutil/eval.h"
+#include "libavutil/display.h"
 
 extern "C" {
 #include <libavcodec/avcodec.h>
@@ -38,6 +40,27 @@ namespace mediaFFmpegMethod {
         return 0;
     }
 
+//    double get_rotation(AVStream *st) {
+//        //从metadata的rotate获取视频旋转角度
+//        AVDictionaryEntry *rotate_tag = av_dict_get(st->metadata, "rotate", NULL, 0);
+//        uint8_t *displaymatrix = av_stream_get_side_data(st, AV_PKT_DATA_DISPLAYMATRIX, NULL);
+//        double theta = 0;
+//        if (rotate_tag && *rotate_tag->value && strcmp(rotate_tag->value, "0")) {
+//            char *tail;
+//            theta = av_strtod(rotate_tag->value, &tail);
+//            if (*tail)theta = 0;
+//        }
+//        if (displaymatrix && !theta)theta = -av_display_rotation_get((int32_t *) displaymatrix);
+//        theta -= 360 * floor(theta / 360 + 0.9 / 360);
+//        if (fabs(theta - 90 * round(theta / 90)) > 2)
+//            av_log(NULL, AV_LOG_WARNING,
+//                   "Odd rotation angle.\n"
+//                   "If you want to help, upload a sample "
+//                   "of this file to ftp://upload.ffmpeg.org/incoming/ "
+//                   "and contact the ffmpeg-devel mailing list. (ffmpeg-devel@ffmpeg.org)");
+//        return theta;
+//    }
+
     //本地网络路径
     char *path;
 
@@ -48,7 +71,6 @@ namespace mediaFFmpegMethod {
     AVCodecContext *avCodecContext;
     AVPacket *avPacket;
     AVFrame *avFrame;
-    AVFrame *rgb_avFrame;
     SwsContext *swsContext;
     AVFrame *rgbFrame;
     uint8_t *rgbBuffer;
@@ -85,19 +107,18 @@ namespace mediaFFmpegMethod {
         avPacket = av_packet_alloc();
         //申请AVPacket
         avFrame = av_frame_alloc();//存放yuv数据
-        rgb_avFrame = av_frame_alloc();//存放rgb数据
 
         // 创建图像转换上下文
         swsContext = sws_getContext(
                 avCodecContext->width, avCodecContext->height, AV_PIX_FMT_YUV420P,
-                avCodecContext->width, avCodecContext->height, AV_PIX_FMT_RGBA,
+                avCodecContext->width, avCodecContext->height, AV_PIX_FMT_RGB565,
                 0, nullptr, nullptr, nullptr
         );
 
-        // 分配目标RGB帧
+        // 分配目标RGB帧-存放rgb数据
         rgbFrame = av_frame_alloc();
-        int rgbBufferSize = av_image_get_buffer_size(AV_PIX_FMT_RGBA, avCodecContext->width,avCodecContext->height, 1);
-        rgbBuffer = static_cast<uint8_t *>(av_malloc(rgbBufferSize));
+        int rgbBufferSize = av_image_get_buffer_size(AV_PIX_FMT_RGB565, avCodecContext->width,avCodecContext->height, 1);
+        rgbBuffer = (uint8_t *)(av_malloc(rgbBufferSize));
         if (checkExc(env)==1){
             LOGE("native init异常");
         }
@@ -174,13 +195,13 @@ namespace mediaFFmpegMethod {
     extern "C" JNIEXPORT jbyteArray JNICALL
     Java_com_zh_ffmpegsdk_MediaFFmpegMethod_getFrameRGB565ByteArray(JNIEnv *env, jobject thiz) {
         // 分配目标RGB帧
-        av_image_fill_arrays(rgbFrame->data, rgbFrame->linesize, rgbBuffer, AV_PIX_FMT_RGBA,avFrame->width, avFrame->height, 1);
+        av_image_fill_arrays(rgbFrame->data, rgbFrame->linesize, rgbBuffer, AV_PIX_FMT_RGB565,avFrame->width, avFrame->height, 1);
         if (checkExc(env)==1){
             LOGE("native getFrameRGB565ByteArray-av_image_fill_arrays异常");
         }
 
         // 进行颜色空间转换
-        sws_scale(swsContext, avFrame->data, avFrame->linesize, 0, avFrame->height, rgbFrame->data,rgbFrame->linesize);
+        sws_scale(swsContext, (const uint8_t**)avFrame->data, avFrame->linesize, 0, avFrame->height, rgbFrame->data,rgbFrame->linesize);
         if (checkExc(env)==1){
             LOGE("native getFrameRGB565ByteArray-sws_scale异常");
         }
@@ -206,7 +227,6 @@ namespace mediaFFmpegMethod {
         av_free(rgbBuffer);
         sws_freeContext(swsContext);
         av_frame_free(&avFrame);
-        av_frame_free(&rgb_avFrame);
         avcodec_close(avCodecContext);
         avcodec_free_context(&avCodecContext);
         avformat_free_context(avFormatContext);
