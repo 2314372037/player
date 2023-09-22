@@ -69,8 +69,18 @@
             android:layout_width="match_parent"
             android:layout_height="220dp" />
 
+        <org.webrtc.SurfaceViewRenderer
+            android:id="@+id/surfaceViewRenderer"
+            android:layout_width="match_parent"
+            android:layout_height="220dp"/>
+
+        <SurfaceView
+            android:id="@+id/surfaceView"
+            android:layout_width="match_parent"
+            android:layout_height="220dp"/>
         <ImageView
             android:id="@+id/ivPreview2"
+            android:visibility="gone"
             android:layout_width="match_parent"
             android:layout_height="220dp" />
     </LinearLayout>
