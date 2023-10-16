@@ -11,10 +11,11 @@ import android.widget.ImageView
 import com.drake.net.Post
 import com.drake.net.utils.scopeNetLife
 import com.yancy.yuvutils.ImageUtils
+import com.yancy.yuvutils.ImageUtils.i420ToNV21
+import com.yancy.yuvutils.ImageUtils.nv21Scale
 import org.json.JSONObject
 import org.webrtc.DefaultVideoDecoderFactory
 import org.webrtc.EglBase
-import org.webrtc.EglRenderer
 import org.webrtc.MediaConstraints
 import org.webrtc.MediaStream
 import org.webrtc.MediaStreamTrack
@@ -54,50 +55,53 @@ object KotlinTest {
                 mediaStream?.let {
                     if (it.videoTracks.isEmpty().not()) {
                         it.videoTracks[0].addSink(surfaceViewRenderer)
-                        it.videoTracks[0].addSink {
-                            val buffer: VideoFrame.I420Buffer = it.getBuffer().toI420()!!
-                            val height = buffer.height
-                            val width = buffer.width
+                        it.videoTracks[0].addSink { videoFrame->
+                            videoFrame?.buffer?.toI420()?.let { i420buffer->
+                                val width = i420buffer.width
+                                val height = i420buffer.height
 
-                            val yBuffer = buffer.dataY
-                            val uBuffer = buffer.dataU
-                            val vBuffer = buffer.dataV
+                                val yBuffer = i420buffer.dataY
+                                val uBuffer = i420buffer.dataU
+                                val vBuffer = i420buffer.dataV
 
-                            val yStride = buffer.strideY
-                            val uStride = buffer.strideU
-                            val vStride = buffer.strideV
+                                val yStride = i420buffer.strideY
+                                val uStride = i420buffer.strideU
+                                val vStride = i420buffer.strideV
 
-                            val data = ByteArray(height * width * 3 / 2)
-                            yBuffer[data, 0, height * width]
+                                val data = ByteArray(height * width * 3 / 2)
+                                yBuffer[data, 0, height * width]
 
-                            var uOffset = width * height
-                            var vOffset = width * height * 5 / 4
-                            for (i in 0 until height / 2) {
-                                uBuffer.position(i * uStride)
-                                uBuffer[data, uOffset, width / 2]
-                                uOffset += width / 2
-                                vBuffer.position(i * vStride)
-                                vBuffer[data, vOffset, width / 2]
-                                vOffset += width / 2
-                            }
-                            buffer.release()
-                            val nv21 = ImageUtils.i420ToNV21(data,width,height)
+                                var uOffset = width * height
+                                var vOffset = width * height * 5 / 4
+                                for (i in 0 until height / 2) {
+                                    uBuffer.position(i * uStride)
+                                    uBuffer[data, uOffset, width / 2]
+                                    uOffset += width / 2
+                                    vBuffer.position(i * vStride)
+                                    vBuffer[data, vOffset, width / 2]
+                                    vOffset += width / 2
+                                }
+                                i420buffer.release()
+                                val nv21 = ImageUtils.i420ToNV21(data,width,height)
+
+                                //val newNv21 = nv21Scale(nv21!!, width, height, 1080, 1080)
 
 //                                val nv21 = ImageUtils.rgb565ToNV21(bytes,width,height,180)//degree设置180后(旋转后)可解决图像颜色
 //                                val nv21_1 = ImageUtils.nv21Scale(nv21,width,height,height,width)
 //                                val nv21_2 = ImageUtils.nv21Rotate(nv21,width,height,180)//degree设置180后(旋转后)可解决图像颜
-                            val image = YuvImage(nv21, ImageFormat.NV21, width, height, null)
-                            val jpegOutputStream = ByteArrayOutputStream(nv21!!.size)
-                            if (!image.compressToJpeg(Rect(0, 0, width, height), 80, jpegOutputStream)) {
-                                return@addSink
+                                val image = YuvImage(nv21, ImageFormat.NV21, width, height, null)
+                                val jpegOutputStream = ByteArrayOutputStream(nv21!!.size)
+                                if (!image.compressToJpeg(Rect(0, 0, width, height), 80, jpegOutputStream)) {
+                                    return@addSink
+                                }
+                                val tmp = jpegOutputStream.toByteArray()
+                                //val bitmap = ImageUtils.rgb565ToBitmap565(bytes,width,height)
+                                val bitmap = BitmapFactory.decodeByteArray(tmp, 0, tmp.size)
+                                if (handler == null) {
+                                    handler = Handler(runLooper!!)
+                                }
+                                handler?.post { imageView.setImageBitmap(bitmap) }
                             }
-                            val tmp = jpegOutputStream.toByteArray()
-                            //val bitmap = ImageUtils.rgb565ToBitmap565(bytes,width,height)
-                            val bitmap = BitmapFactory.decodeByteArray(tmp, 0, tmp.size)
-                            if (handler == null) {
-                                handler = Handler(runLooper!!)
-                            }
-                            handler?.post { imageView.setImageBitmap(bitmap) }
                         }
                     }
                 }

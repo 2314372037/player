@@ -11,6 +11,7 @@ import android.view.*
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import com.yancy.yuvutils.ImageUtils
 import org.webrtc.SurfaceViewRenderer
 import tv.danmaku.ijk.media.player.IjkMediaPlayer
 import java.io.ByteArrayOutputStream
@@ -94,7 +95,6 @@ class MainActivity : AppCompatActivity() {
 //            ijkMediaPlayer.prepareAsync()
 
 //            JavaTest.test(edit_url.text.toString(),findViewById<ImageView>(R.id.ivPreview))
-
             KotlinTest.test(this,edit_url.text.toString(),
                 findViewById<ImageView>(R.id.ivPreview),
                 surfaceViewRenderer,
@@ -109,22 +109,21 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun camera1(){
+        val ivPreview = findViewById<ImageView>(R.id.ivPreview)
         val camera = Camera.open()
         camera.setPreviewTexture(textureView.surfaceTexture)
+        camera.parameters?.let {
+            it.setPreviewSize(640,480)
+            camera.parameters = it
+        }
         camera.setPreviewCallback(object : Camera.PreviewCallback{
             override fun onPreviewFrame(data: ByteArray, camera: Camera?) {
                 val size: Camera.Size = camera?.getParameters()!!.getPreviewSize() //获取预览大小
                 val width: Int = size.width //宽度
                 val height: Int = size.height
-                val image = YuvImage(data, ImageFormat.NV21, width, height, null)
-                val os = ByteArrayOutputStream(data.size)
-                if (!image.compressToJpeg(Rect(0, 0, width, height), 100, os)) {
-                    return
-                }
-                val tmp: ByteArray = os.toByteArray()
-                val bitmap = BitmapFactory.decodeByteArray(tmp, 0, tmp.size)
+                val bitmap2 = ImageUtils.nv21ToBitmap565(data,width,height)
                 runOnUiThread {
-                    findViewById<ImageView>(R.id.ivPreview).setImageBitmap(bitmap)
+                    ivPreview.setImageBitmap(bitmap2)
                 }
             }
         })
