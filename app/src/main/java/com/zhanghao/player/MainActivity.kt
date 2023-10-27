@@ -25,7 +25,6 @@ class MainActivity : AppCompatActivity() {
     lateinit var button_stop: Button
     lateinit var button_camera: Button
     lateinit var textureView: TextureView
-    lateinit var surfaceViewRenderer: SurfaceViewRenderer
     lateinit var mediaPlayer:MediaPlayer
     lateinit var ijkMediaPlayer: IjkMediaPlayer
     private var handler: Handler? = null
@@ -49,13 +48,12 @@ class MainActivity : AppCompatActivity() {
         button_stop = findViewById<Button>(R.id.button_stop)
         button_camera = findViewById<Button>(R.id.button_camera)
         textureView = findViewById<TextureView>(R.id.textureView)
-        surfaceViewRenderer = findViewById<SurfaceViewRenderer>(R.id.surfaceViewRenderer)
 
 //        edit_url.setText("http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4")
         //edit_url.setText("http://devimages.apple.com/iphone/samples/bipbop/bipbopall.m3u8")
 //        edit_url.setText("rtmp://ns8.indexforce.com/home/mystream")
         //edit_url.setText("rtsp://wowzaec2demo.streamlock.net/vod/mp4:BigBuckBunny_115k.mp4")
-        edit_url.setText("/sdcard/b.mp4")
+        edit_url.setText("webrtc://47.102.213.158/live/livesteam")
         button_play.setOnClickListener {
 //            ijkMediaPlayer = IjkMediaPlayer()
 //            ijkMediaPlayer.isLooping = true
@@ -96,9 +94,14 @@ class MainActivity : AppCompatActivity() {
 
 //            JavaTest.test(edit_url.text.toString(),findViewById<ImageView>(R.id.ivPreview))
             KotlinTest.test(this,edit_url.text.toString(),
-                findViewById<ImageView>(R.id.ivPreview),
-                surfaceViewRenderer,
-                findViewById<SurfaceView>(R.id.surfaceView))
+                arrayListOf(
+                    findViewById<ImageView>(R.id.ivPreview),
+                    findViewById<ImageView>(R.id.ivPreview2),
+                    findViewById<ImageView>(R.id.ivPreview3),
+                    findViewById<ImageView>(R.id.ivPreview4),
+                    findViewById<ImageView>(R.id.ivPreview5)
+                )
+            )
         }
         button_stop.setOnClickListener {
             JavaTest.stop()
