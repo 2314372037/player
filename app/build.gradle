@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    compileSdkVersion 33
+    compileSdkVersion 34
 
     defaultConfig {
         applicationId "com.zhanghao.player"
@@ -35,6 +35,10 @@ android {
 }
 
 dependencies {
+    implementation files('libs/ijkplayer-java-release.aar')
+    implementation files('libs/YuvUtils-release.aar')
+    implementation files('libs/stream-webrtc-android-1.0.6.aar')
+    implementation files('libs/hhplayer.aar')
 
     implementation "org.jetbrains.kotlin:kotlin-stdlib:1.8.20"
     implementation 'androidx.core:core-ktx:1.10.0'
@@ -42,14 +46,6 @@ dependencies {
     implementation 'com.google.android.material:material:1.8.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
 
-    implementation project(path: ':FFmpegSdk')
-    implementation files('libs/ijkplayer-java-release.aar')
-    implementation files('libs/YuvUtils-release.aar')
-
-    implementation "io.getstream:stream-webrtc-android:1.0.6"
-
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0" // 协程(版本自定)
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.0'
-    implementation 'com.squareup.okhttp3:okhttp:4.11.0' // 要求OkHttp4以上
-    implementation 'com.github.liangjingkanji:Net:3.6.2'
+//    implementation project(path: ':FFmpegSdk')
+//    implementation project(path: ':HHPlayer')
 }

@@ -2,20 +2,21 @@ package com.zhanghao.player
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.graphics.*
+import android.graphics.BitmapFactory
+import android.graphics.ImageFormat
+import android.graphics.Rect
+import android.graphics.YuvImage
 import android.hardware.Camera
 import android.media.MediaPlayer
 import android.os.*
-import android.telephony.*
 import android.view.*
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import com.yancy.yuvutils.ImageUtils
-import org.webrtc.SurfaceViewRenderer
-import tv.danmaku.ijk.media.player.IjkMediaPlayer
+import com.yancy.yuvutils.ImageUtils.i420ToBitmap565
+import com.zh.hhplayer.HHPlayer
 import java.io.ByteArrayOutputStream
-import java.util.*
 
 
 class MainActivity : AppCompatActivity() {
@@ -25,8 +26,9 @@ class MainActivity : AppCompatActivity() {
     lateinit var button_stop: Button
     lateinit var button_camera: Button
     lateinit var textureView: TextureView
+    lateinit var surfaceView: SurfaceView
     lateinit var mediaPlayer:MediaPlayer
-    lateinit var ijkMediaPlayer: IjkMediaPlayer
+    lateinit var playerTest: PlayerTest
     private var handler: Handler? = null
 
     @SuppressLint("SetTextI18n")
@@ -48,63 +50,30 @@ class MainActivity : AppCompatActivity() {
         button_stop = findViewById<Button>(R.id.button_stop)
         button_camera = findViewById<Button>(R.id.button_camera)
         textureView = findViewById<TextureView>(R.id.textureView)
-
+        surfaceView = findViewById<SurfaceView>(R.id.surfaceView)
+        val ivPreview = findViewById<ImageView>(R.id.ivPreview)
 //        edit_url.setText("http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4")
         //edit_url.setText("http://devimages.apple.com/iphone/samples/bipbop/bipbopall.m3u8")
 //        edit_url.setText("rtmp://ns8.indexforce.com/home/mystream")
         //edit_url.setText("rtsp://wowzaec2demo.streamlock.net/vod/mp4:BigBuckBunny_115k.mp4")
-        edit_url.setText("webrtc://47.102.213.158/live/livesteam")
+        edit_url.setText("webrtc://192.168.10.80/live/livestream")
         button_play.setOnClickListener {
-//            ijkMediaPlayer = IjkMediaPlayer()
-//            ijkMediaPlayer.isLooping = true
-////            ijkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "mediacodec", 0);
-////            ijkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "mediacodec-auto-rotate", 1);//自动旋转方向
-////            ijkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "mediacodec-handle-resolution-change", 1);
-//            ijkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "opensles", 0);
-////            ijkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "overlay-format", IjkMediaPlayer.SDL_FCC_YV12.toLong());
-//            ijkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "framedrop", 1);
-//            ijkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "start-on-prepared", 1);
-//            ijkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_FORMAT, "http-detect-range-support", 0);
-//            ijkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_CODEC, "skip_loop_filter", 48);
-//            val runLooper = Looper.myLooper()
-//            ijkMediaPlayer.setOnVideoFrameUpdateListener { iMediaPlayer, width, height, bytes ->
-//                val nv21 = ImageUtils.rgb565ToNV21(bytes,width,height,180)//degree设置180后(旋转后)可解决图像颜色失真
-////                val nv21_1 = ImageUtils.nv21Scale(nv21!!,width,height,height,width)
-//                val nv21_2 = ImageUtils.nv21Rotate(nv21!!,width,height,180)//degree设置180后(旋转后)可解决图像颜色失真
-//
-//
-//                val image = YuvImage(nv21_2, ImageFormat.NV21, width, height, null)
-//                val jpegOutputStream = ByteArrayOutputStream(nv21_2!!.size)
-//                if (!image.compressToJpeg(Rect(0, 0, width, height), 80, jpegOutputStream)) {
-//                    return@setOnVideoFrameUpdateListener
-//                }
-//                val tmp = jpegOutputStream.toByteArray()
-//
-//                //val bitmap = ImageUtils.rgb565ToBitmap565(bytes,width,height)
-//                val bitmap = BitmapFactory.decodeByteArray(tmp, 0, tmp.size)
-//
-//                if (handler == null) {
-//                    handler = Handler(runLooper!!)
-//                }
-//                handler?.post { findViewById<ImageView>(R.id.ivPreview).setImageBitmap(bitmap) }
+//            if (true){
+//                mediaPlayer = MediaPlayer()
+//                mediaPlayer.setSurface(Surface(textureView.surfaceTexture))
+//                mediaPlayer.setDataSource(edit_url.text.toString())
+//                mediaPlayer.prepare()
+//                mediaPlayer.start()
+//                return@setOnClickListener
 //            }
-//            ijkMediaPlayer.setSurface(Surface(textureView.surfaceTexture))
-//            ijkMediaPlayer.setDataSource(edit_url.text.toString())
-//            ijkMediaPlayer.prepareAsync()
-
-//            JavaTest.test(edit_url.text.toString(),findViewById<ImageView>(R.id.ivPreview))
-            KotlinTest.test(this,edit_url.text.toString(),
-                arrayListOf(
-                    findViewById<ImageView>(R.id.ivPreview),
-                    findViewById<ImageView>(R.id.ivPreview2),
-                    findViewById<ImageView>(R.id.ivPreview3),
-                    findViewById<ImageView>(R.id.ivPreview4),
-                    findViewById<ImageView>(R.id.ivPreview5)
-                )
-            )
+            playerTest = PlayerTest()
+            playerTest.imageView = ivPreview
+            playerTest.ori_holder = surfaceView.holder
+            playerTest.mSurfacetexture = textureView.surfaceTexture
+            playerTest.start(edit_url.text.toString(),this,textureView.width,textureView.height)
         }
         button_stop.setOnClickListener {
-            JavaTest.stop()
+            playerTest.stop()
         }
         button_camera.setOnClickListener {
             camera1()
