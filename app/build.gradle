@@ -35,10 +35,9 @@ android {
 }
 
 dependencies {
-    implementation files('libs/ijkplayer-java-release.aar')
     implementation files('libs/YuvUtils-release.aar')
-    implementation files('libs/stream-webrtc-android-1.0.6.aar')
-    implementation files('libs/hhplayer.aar')
+    //implementation files('libs/stream-webrtc-android-1.0.6.aar')
+    implementation files('libs/stream-webrtc-android-debug.aar')
 
     implementation "org.jetbrains.kotlin:kotlin-stdlib:1.8.20"
     implementation 'androidx.core:core-ktx:1.10.0'
@@ -47,5 +46,4 @@ dependencies {
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
 
 //    implementation project(path: ':FFmpegSdk')
-//    implementation project(path: ':HHPlayer')
 }

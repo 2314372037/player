@@ -11,6 +11,7 @@ import android.graphics.SurfaceTexture;
 import android.graphics.YuvImage;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.widget.ImageView;
@@ -18,29 +19,32 @@ import android.widget.ImageView;
 import androidx.annotation.NonNull;
 
 import com.yancy.yuvutils.ImageUtils;
-import com.zh.hhplayer.HHPlayer;
+import com.zhanghao.player.hhplayer.WebRTCPlayer_hh;
 
 import java.io.ByteArrayOutputStream;
 
 public class PlayerTest {
-    private HHPlayer hhPlayer;
+    private WebRTCPlayer_hh webRTCPlayer;
     private Handler handler = null;
     public SurfaceHolder ori_holder;
     public SurfaceTexture mSurfacetexture;
     public Surface mSurface;
     public ImageView imageView;
     public void start(String path, Context context,int finalNewWidth,int finalNewHeight){
-        if (hhPlayer == null) {
-            hhPlayer = new HHPlayer();
+        if (webRTCPlayer == null) {
+            webRTCPlayer = new WebRTCPlayer_hh();
         } else {
-            hhPlayer.stop();
-            hhPlayer = new HHPlayer();
+            webRTCPlayer.release();
+            webRTCPlayer = new WebRTCPlayer_hh();
         }
         Looper runLooper = Looper.myLooper();
+        if (runLooper==null){
+            Log.d("调试","runLooper为空");
+            return;
+        }
         if (handler == null) {
             handler = new Handler(runLooper);
         }
-
         if (mSurfacetexture!=null){
             if (mSurface == null) {
                 mSurface = new Surface(mSurfacetexture);
@@ -49,10 +53,19 @@ public class PlayerTest {
                 mSurface = new Surface(mSurfacetexture);
             }
         }
-        hhPlayer.setDataSource(path, new HHPlayer.OnDataListener() {
+        if (!path.startsWith("webrtc://")){
+            Log.d("调试","path不是一个webrtc://地址");
+            return;
+        }
+        webRTCPlayer.setDataSource(path);
+        webRTCPlayer.play(context, new WebRTCPlayer_hh.OnVideoFrameUpdateListener() {
             final Paint paint = new Paint();
             @Override
-            public void callBack(@NonNull byte[] nv21, int width, int height) {
+            public void onFrameUpdate(int width, int height, @NonNull byte[] bytes) {
+                byte[] nv21 = ImageUtils.i420ToNV21(bytes,width,height);
+                if (nv21==null){
+                    return;
+                }
                 byte[] newNv21 = ImageUtils.nv21Scale(nv21,width,height,finalNewWidth,finalNewHeight);
                 if (newNv21!=null){
                     if (ori_holder!=null){
@@ -93,10 +106,10 @@ public class PlayerTest {
                 }
             }
         });
-        hhPlayer.start(context);
     }
 
     public void stop(){
-        hhPlayer.stop();
+        webRTCPlayer.release();
+        webRTCPlayer = null;
     }
 }

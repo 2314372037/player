@@ -2,10 +2,6 @@ package com.zhanghao.player
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.graphics.BitmapFactory
-import android.graphics.ImageFormat
-import android.graphics.Rect
-import android.graphics.YuvImage
 import android.hardware.Camera
 import android.media.MediaPlayer
 import android.os.*
@@ -14,9 +10,6 @@ import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import com.yancy.yuvutils.ImageUtils
-import com.yancy.yuvutils.ImageUtils.i420ToBitmap565
-import com.zh.hhplayer.HHPlayer
-import java.io.ByteArrayOutputStream
 
 
 class MainActivity : AppCompatActivity() {

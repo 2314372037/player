@@ -10,7 +10,6 @@
           <set>
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/FFmpegSdk" />
-            <option value="$PROJECT_DIR$/HHPlayer" />
             <option value="$PROJECT_DIR$/app" />
           </set>
         </option>
