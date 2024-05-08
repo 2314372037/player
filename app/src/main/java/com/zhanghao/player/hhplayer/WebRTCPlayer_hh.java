@@ -48,7 +48,6 @@ public class WebRTCPlayer_hh {
 
         peerConnectionFactory = PeerConnectionFactory.builder()
                 .setVideoDecoderFactory(decoderFactory)
-//                .setVideoDecoderFactory(new SoftwareVideoDecoderFactory())
                 .createPeerConnectionFactory();
 
         PeerConnection.RTCConfiguration rtcConfig = new PeerConnection.RTCConfiguration(new ArrayList<>());

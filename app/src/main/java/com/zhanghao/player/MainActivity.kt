@@ -9,7 +9,7 @@ import android.view.*
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
-import com.yancy.yuvutils.ImageUtils
+import com.zhanghao.player.hhplayer.ImageUtils_hh
 
 
 class MainActivity : AppCompatActivity() {
@@ -86,7 +86,7 @@ class MainActivity : AppCompatActivity() {
                 val size: Camera.Size = camera?.getParameters()!!.getPreviewSize() //获取预览大小
                 val width: Int = size.width //宽度
                 val height: Int = size.height
-                val bitmap2 = ImageUtils.nv21ToBitmap565(data,width,height)
+                val bitmap2 = ImageUtils_hh.nv21ToBitmap(data,width, height)
                 runOnUiThread {
                     ivPreview.setImageBitmap(bitmap2)
                 }
