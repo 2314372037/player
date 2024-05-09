@@ -53,30 +53,13 @@
             android:layout_width="match_parent"
             android:layout_height="220dp" />
 
-        <ScrollView
+        <SurfaceView
+            android:id="@+id/surfaceView"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:visibility="gone">
-
-            <TextView
-                android:id="@+id/tvInfo"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:textColor="@color/white" />
-        </ScrollView>
+            android:layout_height="220dp" />
 
         <ImageView
             android:id="@+id/ivPreview"
-            android:layout_width="match_parent"
-            android:layout_height="220dp" />
-
-        <ImageView
-            android:id="@+id/ivPreview2"
-            android:layout_width="match_parent"
-            android:layout_height="220dp" />
-
-        <SurfaceView
-            android:id="@+id/surfaceView"
             android:layout_width="match_parent"
             android:layout_height="220dp" />
     </LinearLayout>

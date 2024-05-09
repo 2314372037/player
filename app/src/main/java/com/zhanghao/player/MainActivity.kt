@@ -3,7 +3,6 @@ package com.zhanghao.player
 import android.Manifest
 import android.annotation.SuppressLint
 import android.hardware.Camera
-import android.media.MediaPlayer
 import android.os.*
 import android.view.*
 import android.widget.*
@@ -20,9 +19,7 @@ class MainActivity : AppCompatActivity() {
     lateinit var button_camera: Button
     lateinit var textureView: TextureView
     lateinit var surfaceView: SurfaceView
-    lateinit var mediaPlayer:MediaPlayer
-    lateinit var playerTest: PlayerTest
-    private var handler: Handler? = null
+    private val playerTest by lazy { PlayerTest() }
 
     @SuppressLint("SetTextI18n")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -37,14 +34,12 @@ class MainActivity : AppCompatActivity() {
         )
         ActivityCompat.requestPermissions(this, permission, 1)
 
-        tvInfo = findViewById<TextView>(R.id.tvInfo)
         edit_url = findViewById<EditText>(R.id.edit_url)
         button_play = findViewById<Button>(R.id.button_play)
         button_stop = findViewById<Button>(R.id.button_stop)
         button_camera = findViewById<Button>(R.id.button_camera)
         textureView = findViewById<TextureView>(R.id.textureView)
         surfaceView = findViewById<SurfaceView>(R.id.surfaceView)
-        val ivPreview = findViewById<ImageView>(R.id.ivPreview)
 //        edit_url.setText("http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4")
         //edit_url.setText("http://devimages.apple.com/iphone/samples/bipbop/bipbopall.m3u8")
 //        edit_url.setText("rtmp://ns8.indexforce.com/home/mystream")
@@ -59,8 +54,6 @@ class MainActivity : AppCompatActivity() {
 //                mediaPlayer.start()
 //                return@setOnClickListener
 //            }
-            playerTest = PlayerTest()
-            playerTest.imageView = ivPreview
             playerTest.ori_holder = surfaceView.holder
             playerTest.mSurfacetexture = textureView.surfaceTexture
             playerTest.start(edit_url.text.toString(),this,textureView.width,textureView.height)

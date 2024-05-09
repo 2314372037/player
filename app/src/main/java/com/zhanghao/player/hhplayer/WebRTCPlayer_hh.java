@@ -1,11 +1,14 @@
 package com.zhanghao.player.hhplayer;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.util.Log;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.webrtc.DefaultVideoDecoderFactory;
 import org.webrtc.EglBase;
+import org.webrtc.EglRenderer;
 import org.webrtc.MediaConstraints;
 import org.webrtc.MediaStream;
 import org.webrtc.MediaStreamTrack;
@@ -14,6 +17,7 @@ import org.webrtc.PeerConnectionFactory;
 import org.webrtc.RtpTransceiver;
 import org.webrtc.SessionDescription;
 import org.webrtc.SoftwareVideoDecoderFactory;
+import org.webrtc.SurfaceViewRenderer;
 import org.webrtc.VideoFrame;
 import org.webrtc.VideoSink;
 
@@ -58,40 +62,43 @@ public class WebRTCPlayer_hh {
                 super.onAddStream(mediaStream);
                 if (mediaStream != null) {
                     if (!mediaStream.videoTracks.isEmpty()) {
-//                        it.videoTracks[0].addSink(surfaceViewRenderer)
                         mediaStream.videoTracks.get(0).addSink(new VideoSink() {
                             @Override
                             public void onFrame(VideoFrame videoFrame) {
                                 if (videoFrame != null) {
-                                    VideoFrame.I420Buffer buffer = videoFrame.getBuffer().toI420();
-                                    if (buffer == null) {
-                                        return;
+                                    try{
+                                        VideoFrame.I420Buffer buffer = videoFrame.getBuffer().toI420();
+                                        if (buffer == null) {
+                                            return;
+                                        }
+                                        int height = buffer.getHeight();
+                                        int width = buffer.getWidth();
+
+                                        ByteBuffer yBuffer = buffer.getDataY();
+                                        ByteBuffer uBuffer = buffer.getDataU();
+                                        ByteBuffer vBuffer = buffer.getDataV();
+
+                                        int yStride = buffer.getStrideY();
+                                        int uStride = buffer.getStrideU();
+                                        int vStride = buffer.getStrideV();
+
+                                        byte[] data = new byte[height * width * 3 / 2];
+                                        yBuffer.get(data, 0, height * width);
+                                        int uOffset = width * height;
+                                        int vOffset = width * height * 5 / 4;
+                                        for (int i = 0; i < height / 2; i++) {
+                                            uBuffer.position(i * uStride);
+                                            uBuffer.get(data, uOffset, width / 2);
+                                            uOffset += width / 2;
+                                            vBuffer.position(i * vStride);
+                                            vBuffer.get(data, vOffset, width / 2);
+                                            vOffset += width / 2;
+                                        }
+                                        buffer.release();
+                                        onVideoFrameUpdateListener.onFrameUpdate(width, height, data);
+                                    }catch (java.lang.OutOfMemoryError oe){
+                                        Log.d("debug==","异常:"+oe.getMessage());
                                     }
-                                    int height = buffer.getHeight();
-                                    int width = buffer.getWidth();
-
-                                    ByteBuffer yBuffer = buffer.getDataY();
-                                    ByteBuffer uBuffer = buffer.getDataU();
-                                    ByteBuffer vBuffer = buffer.getDataV();
-
-                                    int yStride = buffer.getStrideY();
-                                    int uStride = buffer.getStrideU();
-                                    int vStride = buffer.getStrideV();
-
-                                    byte[] data = new byte[height * width * 3 / 2];
-                                    yBuffer.get(data, 0, height * width);
-                                    int uOffset = width * height;
-                                    int vOffset = width * height * 5 / 4;
-                                    for (int i = 0; i < height / 2; i++) {
-                                        uBuffer.position(i * uStride);
-                                        uBuffer.get(data, uOffset, width / 2);
-                                        uOffset += width / 2;
-                                        vBuffer.position(i * vStride);
-                                        vBuffer.get(data, vOffset, width / 2);
-                                        vOffset += width / 2;
-                                    }
-                                    buffer.release();
-                                    onVideoFrameUpdateListener.onFrameUpdate(width, height, data);
                                 }
                             }
                         });

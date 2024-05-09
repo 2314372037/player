@@ -24,7 +24,6 @@ public class PlayerTest {
     public SurfaceHolder ori_holder;
     public SurfaceTexture mSurfacetexture;
     public Surface mSurface;
-    public ImageView imageView;
 
     public void start(String path, Context context, int finalNewWidth, int finalNewHeight) {
         if (webRTCPlayer == null) {
@@ -54,11 +53,31 @@ public class PlayerTest {
             return;
         }
         webRTCPlayer.setDataSource(path);
-        webRTCPlayer.play(context, new WebRTCPlayer_hh.OnVideoFrameUpdateListener() {
+        WebRTCPlayer_hh.OnVideoFrameUpdateListener listener = new WebRTCPlayer_hh.OnVideoFrameUpdateListener() {
             final Paint paint = new Paint();
 
             @Override
             public void onFrameUpdate(int width, int height, @NonNull byte[] bytes) {
+//                final byte[] nv21 = ImageUtils_hh.I420Tonv21(bytes, width, height);
+//                final byte[] newNv21 = ImageUtils_hh.scaleNV21_5(nv21,width,height,finalNewWidth,finalNewHeight);
+//                //这里可能需要处理图像大小转换
+//                if (ori_holder != null) {
+//                    Bitmap bitmap = ImageUtils_hh.nv21ToBitmap(newNv21, finalNewWidth, finalNewHeight);
+//                    if (bitmap != null) {
+//                        Canvas canvas = ori_holder.lockHardwareCanvas();
+//                        canvas.drawBitmap(bitmap, 0, 0, paint);
+//                        ori_holder.unlockCanvasAndPost(canvas);
+//                    }
+//                }
+//                if (mSurface != null) {
+//                    Bitmap bitmap = ImageUtils_hh.nv21ToBitmap(newNv21, finalNewWidth, finalNewHeight);
+//                    if (bitmap != null) {
+//                        Canvas canvas = mSurface.lockHardwareCanvas();
+//                        canvas.drawBitmap(bitmap, 0, 0, paint);
+//                        mSurface.unlockCanvasAndPost(canvas);
+//                    }
+//                }
+
                 final byte[] nv21 = ImageUtils_hh.I420Tonv21(bytes, width, height);
                 //这里可能需要处理图像大小转换
                 if (ori_holder != null) {
@@ -67,6 +86,7 @@ public class PlayerTest {
                         Canvas canvas = ori_holder.lockHardwareCanvas();
                         canvas.drawBitmap(bitmap, 0, 0, paint);
                         ori_holder.unlockCanvasAndPost(canvas);
+                        bitmap.recycle();
                     }
                 }
                 if (mSurface != null) {
@@ -75,14 +95,20 @@ public class PlayerTest {
                         Canvas canvas = mSurface.lockHardwareCanvas();
                         canvas.drawBitmap(bitmap, 0, 0, paint);
                         mSurface.unlockCanvasAndPost(canvas);
+                        bitmap.recycle();
                     }
                 }
             }
-        });
+        };
+        byte[] nv21 = ImageUtils_hh.generateSolidColorNV21(100, 100, 210, 82, 48);
+        listener.onFrameUpdate(100,100,nv21);
+        webRTCPlayer.play(context, listener);
     }
 
     public void stop() {
-        webRTCPlayer.release();
-        webRTCPlayer = null;
+        if (webRTCPlayer!=null){
+            webRTCPlayer.release();
+            webRTCPlayer = null;
+        }
     }
 }
