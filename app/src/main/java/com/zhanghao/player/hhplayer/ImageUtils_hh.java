@@ -38,36 +38,47 @@ public class ImageUtils_hh {
         return BitmapFactory.decodeByteArray(tmp, 0, tmp.length);
     }
 
-    /**
-     * NV21裁剪 by lake 算法效率 11ms
-     *
-     * @param src    源数据
-     * @param width  源宽
-     * @param height 源高
-     * @param left   顶点坐标
-     * @param top    顶点坐标
-     * @param clip_w 裁剪后的宽
-     * @param clip_h 裁剪后的高
-     * @return 裁剪后的数据
-     */
-    public static byte[] cropNV21(byte[] src, int width, int height, int left, int top, int clip_w, int clip_h) {
-        if (left > width || top > height) {
-            return null;
-        }
-        //取偶
-        int x = left / 2 * 2 , y = top / 2 * 2 ;
-        int w = clip_w / 2 * 2 , h = clip_h / 2 * 2 ;
-        int y_unit = w * h;
-        int src_unit = width * height;
-        int uv = y_unit >> 1;
-        byte[] nData = new byte[y_unit + uv];
-        for (int i = y, len_i = y + h; i < len_i; i++) {
-            for (int j = x, len_j = x + w; j < len_j; j++) {
-                nData[(i - y) * w + j - x] = src[i * width + j];
-                nData[y_unit + ((i - y) / 2) * w + j - x] = src[src_unit + i / 2 * width + j];
+    public static byte[] nv21Scale(byte[] nv21, int nv21Width, int nv21Height, int newWidth, int newHeight){
+        Bitmap bitmap = nv21ToBitmap(nv21,nv21Width,nv21Height);
+        if (bitmap!=null){
+            bitmap = Bitmap.createScaledBitmap(bitmap,newWidth,newHeight,false);//变换
+            int width = bitmap.getWidth();
+            int height = bitmap.getHeight();
+            /***2.bitmap.getPixels()获取图片所有像素点数据，可以得到RGB数据的数组***/
+            int[] argb = new int[width * height];
+            bitmap.getPixels(argb, 0, width, 0, 0, width, height);
+            /***3.根据RGB数组采样分别获取Y，U，V数组，并存储为NV21格式的数组***/
+            byte[] yuv = new byte[width * height * 3 / 2];
+
+            int yIndex = 0;
+            int uvIndex = newWidth * newHeight;
+            int R, G, B, Y, U, V;
+            int index = 0;
+            for (int i = 0; i < height; i++) {
+                for (int j = 0; j < width; j++) {
+                    R = (argb[index] & 0xff0000) >> 16;
+                    G = (argb[index] & 0xff00) >> 8;
+                    B = argb[index] & 0xff;
+
+                    Y = ((66 * R + 129 * G + 25 * B + 128) >> 8) + 16;
+                    U = ((-38 * R - 74 * G + 112 * B + 128) >> 8) + 128;
+                    V = ((112 * R - 94 * G - 18 * B + 128) >> 8) + 128;
+
+                    yuv[yIndex++] = (byte) ((Y < 0) ? 0 : ((Y > 255) ? 255 : Y));
+
+                    //偶数行取U，基数行取V，并存储
+                    if (i % 2 == 0 && index % 2 == 0) {
+                        yuv[uvIndex++] = (byte) ((V < 0) ? 0 : ((V > 255) ? 255 : V));
+                        yuv[uvIndex++] = (byte) ((U < 0) ? 0 : ((U > 255) ? 255 : U));
+                    }
+                    index++;
+                }
+                yIndex += (newWidth - width);
+                uvIndex += (newWidth - width) / 2;
             }
+            return yuv;
         }
-        return nData;
+        return null;
     }
 
     public static byte[] generateSolidColorNV21(int width, int height, int yValue, int uValue, int vValue) {
@@ -91,148 +102,5 @@ public class ImageUtils_hh {
         }
 
         return nv21Data;
-    }
-
-    public static byte[] scaleNV21(byte[] inputNv21, int inputWidth, int inputHeight, int outputWidth, int outputHeight) {
-        // 计算输出 NV21 数组的长度
-        int newLength = outputWidth * outputHeight + (outputWidth / 2) * (outputHeight / 2) * 2;
-        byte[] outputNv21 = new byte[newLength];
-
-        // Y通道缩放
-        for (int i = 0; i < outputHeight; i++) {
-            for (int j = 0; j < outputWidth; j++) {
-                int inputYIndex = (i * inputHeight / outputHeight) * inputWidth + (j * inputWidth / outputWidth);
-                // 确保索引在输入数组的界限内
-                if (inputYIndex < inputWidth * inputHeight) {
-                    outputNv21[i * outputWidth + j] = inputNv21[inputYIndex];
-                }
-            }
-        }
-
-        // U/V通道缩放
-        for (int i = 0; i < outputHeight / 2; i++) {
-            for (int j = 0; j < outputWidth / 2; j++) {
-                int inputUIndex = inputWidth * inputHeight + (i * (inputWidth / 2) / (outputWidth / 2)) * (inputHeight / 2) + (j * 2);
-                int inputVIndex = inputUIndex + 1;
-                // 确保索引在输入数组的界限内
-                if (inputUIndex < inputWidth * inputHeight && inputVIndex < inputWidth * inputHeight + 1) {
-                    outputNv21[newLength - 1 - i * (outputWidth / 2) - j * 2] = inputNv21[inputVIndex];
-                    outputNv21[newLength - 1 - i * (outputWidth / 2) - j * 2 - 1] = inputNv21[inputUIndex];
-                }
-            }
-        }
-
-        return outputNv21;
-    }
-
-    public static byte[] scaleNV21_2(byte[] nv21Data, int width, int height, int scaleWidth, int scaleHeight) {
-        // Create a new byte buffer for the scaled NV21 data
-        byte[] scaledNV21Data = new byte[scaleWidth * scaleHeight * 3 / 2];
-
-        // Calculate the scaling factors
-        float scaleX = (float) width / scaleWidth;
-        float scaleY = (float) height / scaleHeight;
-
-        for (int dstY = 0; dstY < scaleHeight; dstY++) {
-            for (int dstX = 0; dstX < scaleWidth; dstX++) {
-                // Calculate the corresponding source image position
-                int srcX = (int) (dstX * scaleX);
-                int srcY = (int) (dstY * scaleY);
-
-                // Interpolate the pixel values
-                byte y = nv21Data[srcX + srcY * width];
-                int uvIndex = width * height + srcY / 2 * (width / 2) + srcX / 2 * 2;
-                byte u = nv21Data[uvIndex];
-                byte v = nv21Data[uvIndex + 1];
-
-                // Write the interpolated pixel values to the scaled NV21 data buffer
-                scaledNV21Data[dstX + dstY * scaleWidth] = y;
-
-                // 处理 U/V 值，注意交错存储和正确的索引计算
-                if ((srcY % 2 == 0) && (srcX % 2 == 0)) {
-                    int uvIndex1 = (dstY / 2) * (scaleWidth / 2) + (dstX / 2) * 2;
-                    scaledNV21Data[scaleWidth * scaleHeight + uvIndex1] = u;
-                    scaledNV21Data[scaleWidth * scaleHeight + uvIndex1 + 1] = v;
-                }
-            }
-        }
-
-        return scaledNV21Data;
-    }
-
-    public static byte[] scaleNV21_3(byte[] nv21Data, int width, int height, int scaleWidth, int scaleHeight) {
-        // 创建目标图像数据缓冲区
-        byte[] scaledNv21Data = new byte[scaleWidth * scaleHeight + (scaleWidth / 2) * (scaleHeight / 2) * 2];
-
-        // 计算每个像素缩放的比例因子
-        float scaleX = (float) width / scaleWidth;
-        float scaleY = (float) height / scaleHeight;
-
-        for (int i = 0; i < scaleHeight; i++) {
-            for (int j = 0; j < scaleWidth; j++) {
-                // 计算原始图像中对应的 Y 值索引
-                int srcX = (int) (j * scaleX);
-                int srcY = (int) (i * scaleY);
-                int yIndex = srcY * width + srcX;
-                if (yIndex < width * height) {
-                    // 写入缩放后的 Y 值
-                    scaledNv21Data[i * scaleWidth + j] = nv21Data[yIndex];
-                }
-            }
-        }
-
-        // 处理 U/V 色度分量
-        int outputUvIndex = scaleWidth * scaleHeight;
-        for (int i = 0; i < scaleHeight / 2; i++) {
-            for (int j = 0; j < scaleWidth / 2; j++) {
-                // 计算原始图像中对应的 U/V 值索引
-                int srcX = j * 2;
-                int srcY = i * 2;
-                int uvIndex = srcY * (width / 2) + srcX / 2;
-
-                // 写入缩放后的 U/V 值
-                scaledNv21Data[outputUvIndex++] = nv21Data[width * height + uvIndex]; // U 值
-                scaledNv21Data[outputUvIndex++] = nv21Data[width * height + 1 + uvIndex]; // V 值
-            }
-        }
-
-        return scaledNv21Data;
-    }
-
-    public static byte[] scaleNV21_5(byte[] nv21Data, int width, int height, int scaleWidth, int scaleHeight) {
-        byte[] scaledNv21Data = new byte[scaleWidth * scaleHeight + (scaleWidth / 2) * (scaleHeight / 2) * 2];
-
-        float scaleX = (float) width / scaleWidth;
-        float scaleY = (float) height / scaleHeight;
-
-        for (int i = 0; i < scaleHeight; i++) {
-            for (int j = 0; j < scaleWidth; j++) {
-                int srcX = Math.round(j * scaleX);
-                int srcY = Math.round(i * scaleY);
-
-                // 确保 srcX 和 srcY 在原始图像的尺寸范围内
-                if (srcX < width && srcY < height) {
-                    int yIndex = srcY * width + srcX;
-                    scaledNv21Data[i * scaleWidth + j] = nv21Data[yIndex];
-                }
-            }
-        }
-
-        int outputUvIndex = scaleWidth * scaleHeight;
-        for (int i = 0; i < scaleHeight / 2; i++) {
-            for (int j = 0; j < scaleWidth / 2; j++) {
-                int srcX = j * 2;
-                int srcY = i * 2;
-
-                // 确保 srcX 和 srcY 在原始图像的尺寸范围内
-                if (srcX < width && srcY < height) {
-                    int uvIndex = (srcY / 2) * (width / 2) + (srcX / 2);
-                    scaledNv21Data[outputUvIndex++] = nv21Data[width * height + uvIndex]; // U 值
-                    scaledNv21Data[outputUvIndex++] = nv21Data[width * height + 1 + uvIndex]; // V 值
-                }
-            }
-        }
-
-        return scaledNv21Data;
     }
 }

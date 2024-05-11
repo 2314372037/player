@@ -3,6 +3,7 @@ package com.zhanghao.player.hhplayer;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.util.Log;
+import android.view.Surface;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -29,6 +30,12 @@ public class WebRTCPlayer_hh {
     private String sdpRequestSource = "";
     private PeerConnection peerConnection;
     private PeerConnectionFactory peerConnectionFactory;
+
+    private Surface surface;
+
+    public void setSurface(Surface surface){
+        this.surface = surface;
+    }
 
     public void setDataSource(String source) {
         URL = source;

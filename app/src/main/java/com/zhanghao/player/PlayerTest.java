@@ -10,7 +10,6 @@ import android.os.Looper;
 import android.util.Log;
 import android.view.Surface;
 import android.view.SurfaceHolder;
-import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
 
@@ -53,55 +52,35 @@ public class PlayerTest {
             return;
         }
         webRTCPlayer.setDataSource(path);
+        webRTCPlayer.setSurface(mSurface);
         WebRTCPlayer_hh.OnVideoFrameUpdateListener listener = new WebRTCPlayer_hh.OnVideoFrameUpdateListener() {
             final Paint paint = new Paint();
 
             @Override
             public void onFrameUpdate(int width, int height, @NonNull byte[] bytes) {
-//                final byte[] nv21 = ImageUtils_hh.I420Tonv21(bytes, width, height);
-//                final byte[] newNv21 = ImageUtils_hh.scaleNV21_5(nv21,width,height,finalNewWidth,finalNewHeight);
-//                //这里可能需要处理图像大小转换
-//                if (ori_holder != null) {
-//                    Bitmap bitmap = ImageUtils_hh.nv21ToBitmap(newNv21, finalNewWidth, finalNewHeight);
-//                    if (bitmap != null) {
-//                        Canvas canvas = ori_holder.lockHardwareCanvas();
-//                        canvas.drawBitmap(bitmap, 0, 0, paint);
-//                        ori_holder.unlockCanvasAndPost(canvas);
-//                    }
-//                }
+                final byte[] nv21 = ImageUtils_hh.I420Tonv21(bytes, width, height);
+                //这里可能需要处理图像大小转换
+                final byte[] newNv21 = ImageUtils_hh.nv21Scale(nv21,width,height,finalNewWidth,finalNewHeight);
+                if (ori_holder != null) {
+                    Bitmap bitmap = ImageUtils_hh.nv21ToBitmap(newNv21,finalNewWidth,finalNewHeight);
+                    if (bitmap != null) {
+                        Canvas canvas = ori_holder.lockHardwareCanvas();
+                        canvas.drawBitmap(bitmap, 0, 0, paint);
+                        ori_holder.unlockCanvasAndPost(canvas);
+                    }
+                }
 //                if (mSurface != null) {
-//                    Bitmap bitmap = ImageUtils_hh.nv21ToBitmap(newNv21, finalNewWidth, finalNewHeight);
+//                    Bitmap bitmap = ImageUtils_hh.nv21ToBitmap(newNv21,finalNewWidth,finalNewHeight);
 //                    if (bitmap != null) {
 //                        Canvas canvas = mSurface.lockHardwareCanvas();
 //                        canvas.drawBitmap(bitmap, 0, 0, paint);
 //                        mSurface.unlockCanvasAndPost(canvas);
 //                    }
 //                }
-
-                final byte[] nv21 = ImageUtils_hh.I420Tonv21(bytes, width, height);
-                //这里可能需要处理图像大小转换
-                if (ori_holder != null) {
-                    Bitmap bitmap = ImageUtils_hh.nv21ToBitmap(nv21, width, height);
-                    if (bitmap != null) {
-                        Canvas canvas = ori_holder.lockHardwareCanvas();
-                        canvas.drawBitmap(bitmap, 0, 0, paint);
-                        ori_holder.unlockCanvasAndPost(canvas);
-                        bitmap.recycle();
-                    }
-                }
-                if (mSurface != null) {
-                    Bitmap bitmap = ImageUtils_hh.nv21ToBitmap(nv21, width, height);
-                    if (bitmap != null) {
-                        Canvas canvas = mSurface.lockHardwareCanvas();
-                        canvas.drawBitmap(bitmap, 0, 0, paint);
-                        mSurface.unlockCanvasAndPost(canvas);
-                        bitmap.recycle();
-                    }
-                }
             }
         };
-        byte[] nv21 = ImageUtils_hh.generateSolidColorNV21(100, 100, 210, 82, 48);
-        listener.onFrameUpdate(100,100,nv21);
+        byte[] nv21 = ImageUtils_hh.generateSolidColorNV21(finalNewWidth, finalNewHeight, 128, 128, 128);//灰色
+        listener.onFrameUpdate(finalNewWidth,finalNewHeight,nv21);//先更新一个首帧画面，让app知道调用成功了
         webRTCPlayer.play(context, listener);
     }
 
