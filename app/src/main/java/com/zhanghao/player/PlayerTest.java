@@ -52,7 +52,6 @@ public class PlayerTest {
             return;
         }
         webRTCPlayer.setDataSource(path);
-        webRTCPlayer.setSurface(mSurface);
         WebRTCPlayer_hh.OnVideoFrameUpdateListener listener = new WebRTCPlayer_hh.OnVideoFrameUpdateListener() {
             final Paint paint = new Paint();
 
@@ -69,18 +68,16 @@ public class PlayerTest {
                         ori_holder.unlockCanvasAndPost(canvas);
                     }
                 }
-//                if (mSurface != null) {
-//                    Bitmap bitmap = ImageUtils_hh.nv21ToBitmap(newNv21,finalNewWidth,finalNewHeight);
-//                    if (bitmap != null) {
-//                        Canvas canvas = mSurface.lockHardwareCanvas();
-//                        canvas.drawBitmap(bitmap, 0, 0, paint);
-//                        mSurface.unlockCanvasAndPost(canvas);
-//                    }
-//                }
+                if (mSurface != null) {
+                    Bitmap bitmap = ImageUtils_hh.nv21ToBitmap(newNv21,finalNewWidth,finalNewHeight);
+                    if (bitmap != null) {
+                        Canvas canvas = mSurface.lockHardwareCanvas();
+                        canvas.drawBitmap(bitmap, 0, 0, paint);
+                        mSurface.unlockCanvasAndPost(canvas);
+                    }
+                }
             }
         };
-        byte[] nv21 = ImageUtils_hh.generateSolidColorNV21(finalNewWidth, finalNewHeight, 128, 128, 128);//灰色
-        listener.onFrameUpdate(finalNewWidth,finalNewHeight,nv21);//先更新一个首帧画面，让app知道调用成功了
         webRTCPlayer.play(context, listener);
     }
 

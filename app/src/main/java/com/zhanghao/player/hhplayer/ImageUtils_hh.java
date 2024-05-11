@@ -5,6 +5,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.ImageFormat;
 import android.graphics.Rect;
 import android.graphics.YuvImage;
+import android.util.Log;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
@@ -44,18 +45,18 @@ public class ImageUtils_hh {
             bitmap = Bitmap.createScaledBitmap(bitmap,newWidth,newHeight,false);//变换
             int width = bitmap.getWidth();
             int height = bitmap.getHeight();
-            /***2.bitmap.getPixels()获取图片所有像素点数据，可以得到RGB数据的数组***/
+            //2.bitmap.getPixels()获取图片所有像素点数据，可以得到RGB数据的数组
             int[] argb = new int[width * height];
             bitmap.getPixels(argb, 0, width, 0, 0, width, height);
-            /***3.根据RGB数组采样分别获取Y，U，V数组，并存储为NV21格式的数组***/
-            byte[] yuv = new byte[width * height * 3 / 2];
+            //3.根据RGB数组采样分别获取Y，U，V数组，并存储为NV21格式的数组
+            byte[] yuv = new byte[newWidth * newHeight * 3 / 2];
 
             int yIndex = 0;
             int uvIndex = newWidth * newHeight;
             int R, G, B, Y, U, V;
             int index = 0;
-            for (int i = 0; i < height; i++) {
-                for (int j = 0; j < width; j++) {
+            for (int i = 0; i < newHeight; i++) {
+                for (int j = 0; j < newWidth; j++) {
                     R = (argb[index] & 0xff0000) >> 16;
                     G = (argb[index] & 0xff00) >> 8;
                     B = argb[index] & 0xff;
@@ -64,17 +65,17 @@ public class ImageUtils_hh {
                     U = ((-38 * R - 74 * G + 112 * B + 128) >> 8) + 128;
                     V = ((112 * R - 94 * G - 18 * B + 128) >> 8) + 128;
 
-                    yuv[yIndex++] = (byte) ((Y < 0) ? 0 : ((Y > 255) ? 255 : Y));
+                    yuv[yIndex++] = (byte) (Y);
 
                     //偶数行取U，基数行取V，并存储
                     if (i % 2 == 0 && index % 2 == 0) {
-                        yuv[uvIndex++] = (byte) ((V < 0) ? 0 : ((V > 255) ? 255 : V));
-                        yuv[uvIndex++] = (byte) ((U < 0) ? 0 : ((U > 255) ? 255 : U));
+                        if (uvIndex+1<yuv.length){
+                            yuv[uvIndex++] = (byte) (V);
+                            yuv[uvIndex++] = (byte) (U);
+                        }
                     }
                     index++;
                 }
-                yIndex += (newWidth - width);
-                uvIndex += (newWidth - width) / 2;
             }
             return yuv;
         }

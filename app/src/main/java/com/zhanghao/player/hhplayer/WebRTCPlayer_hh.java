@@ -1,15 +1,12 @@
 package com.zhanghao.player.hhplayer;
 
 import android.content.Context;
-import android.graphics.Bitmap;
 import android.util.Log;
-import android.view.Surface;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.webrtc.DefaultVideoDecoderFactory;
 import org.webrtc.EglBase;
-import org.webrtc.EglRenderer;
 import org.webrtc.MediaConstraints;
 import org.webrtc.MediaStream;
 import org.webrtc.MediaStreamTrack;
@@ -17,8 +14,6 @@ import org.webrtc.PeerConnection;
 import org.webrtc.PeerConnectionFactory;
 import org.webrtc.RtpTransceiver;
 import org.webrtc.SessionDescription;
-import org.webrtc.SoftwareVideoDecoderFactory;
-import org.webrtc.SurfaceViewRenderer;
 import org.webrtc.VideoFrame;
 import org.webrtc.VideoSink;
 
@@ -30,12 +25,6 @@ public class WebRTCPlayer_hh {
     private String sdpRequestSource = "";
     private PeerConnection peerConnection;
     private PeerConnectionFactory peerConnectionFactory;
-
-    private Surface surface;
-
-    public void setSurface(Surface surface){
-        this.surface = surface;
-    }
 
     public void setDataSource(String source) {
         URL = source;
