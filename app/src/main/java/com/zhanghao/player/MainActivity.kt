@@ -44,7 +44,7 @@ class MainActivity : AppCompatActivity() {
         //edit_url.setText("http://devimages.apple.com/iphone/samples/bipbop/bipbopall.m3u8")
 //        edit_url.setText("rtmp://ns8.indexforce.com/home/mystream")
         //edit_url.setText("rtsp://wowzaec2demo.streamlock.net/vod/mp4:BigBuckBunny_115k.mp4")
-        edit_url.setText("webrtc://192.168.10.80/live/livestream")
+        edit_url.setText("webrtc://192.168.10.34/live/livestream")
         button_play.setOnClickListener {
 //            if (true){
 //                mediaPlayer = MediaPlayer()
@@ -71,14 +71,16 @@ class MainActivity : AppCompatActivity() {
         val camera = Camera.open()
         camera.setPreviewTexture(textureView.surfaceTexture)
         camera.parameters?.let {
-            it.setPreviewSize(640,480)
+            it.setPreviewSize(1920,1080)
             camera.parameters = it
         }
+        val par = camera?.getParameters()
+        val size: Camera.Size = par!!.getPreviewSize() //获取预览大小
+        val width: Int = size.width //宽度
+        val height: Int = size.height
+        val rotation = par.get("rotation")
         camera.setPreviewCallback(object : Camera.PreviewCallback{
             override fun onPreviewFrame(data: ByteArray, camera: Camera?) {
-                val size: Camera.Size = camera?.getParameters()!!.getPreviewSize() //获取预览大小
-                val width: Int = size.width //宽度
-                val height: Int = size.height
                 val bitmap2 = ImageUtils_hh.nv21ToBitmap(data,width, height)
                 runOnUiThread {
                     ivPreview.setImageBitmap(bitmap2)

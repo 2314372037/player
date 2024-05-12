@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.SurfaceTexture;
+import android.hardware.Camera;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -24,7 +25,7 @@ public class PlayerTest {
     public SurfaceTexture mSurfacetexture;
     public Surface mSurface;
 
-    public void start(String path, Context context, int finalNewWidth, int finalNewHeight) {
+    public void start(String path, Context context, int newWidth, int newHeight) {
         if (webRTCPlayer == null) {
             webRTCPlayer = new WebRTCPlayer_hh();
         } else {
@@ -52,6 +53,10 @@ public class PlayerTest {
             return;
         }
         webRTCPlayer.setDataSource(path);
+
+        int rotation = 0;
+        final int finalNewWidth = newWidth;
+        final int finalNewHeight = newHeight;
         WebRTCPlayer_hh.OnVideoFrameUpdateListener listener = new WebRTCPlayer_hh.OnVideoFrameUpdateListener() {
             final Paint paint = new Paint();
 
@@ -59,9 +64,14 @@ public class PlayerTest {
             public void onFrameUpdate(int width, int height, @NonNull byte[] bytes) {
                 final byte[] nv21 = ImageUtils_hh.I420Tonv21(bytes, width, height);
                 //这里可能需要处理图像大小转换
-                final byte[] newNv21 = ImageUtils_hh.nv21Scale(nv21,width,height,finalNewWidth,finalNewHeight);
+                final byte[] newNv21 = ImageUtils_hh.nv21Scale(nv21,width,height,finalNewWidth,finalNewHeight,rotation);
+                Bitmap bitmap;
+                if (rotation == 90 || rotation == 270) {//横向旋转后，需要交换宽高
+                    bitmap = ImageUtils_hh.nv21ToBitmap(newNv21,finalNewHeight,finalNewWidth);
+                }else{
+                    bitmap = ImageUtils_hh.nv21ToBitmap(newNv21,finalNewWidth,finalNewHeight);
+                }
                 if (ori_holder != null) {
-                    Bitmap bitmap = ImageUtils_hh.nv21ToBitmap(newNv21,finalNewWidth,finalNewHeight);
                     if (bitmap != null) {
                         Canvas canvas = ori_holder.lockHardwareCanvas();
                         canvas.drawBitmap(bitmap, 0, 0, paint);
@@ -69,7 +79,6 @@ public class PlayerTest {
                     }
                 }
                 if (mSurface != null) {
-                    Bitmap bitmap = ImageUtils_hh.nv21ToBitmap(newNv21,finalNewWidth,finalNewHeight);
                     if (bitmap != null) {
                         Canvas canvas = mSurface.lockHardwareCanvas();
                         canvas.drawBitmap(bitmap, 0, 0, paint);

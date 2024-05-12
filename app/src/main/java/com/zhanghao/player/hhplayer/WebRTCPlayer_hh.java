@@ -92,8 +92,10 @@ public class WebRTCPlayer_hh {
                                         }
                                         buffer.release();
                                         onVideoFrameUpdateListener.onFrameUpdate(width, height, data);
-                                    }catch (java.lang.OutOfMemoryError oe){
-                                        Log.d("debug==","异常:"+oe.getMessage());
+                                        int aa = 0/0;
+                                    }catch (Throwable t){
+                                        Log.d("debug==","异常:"+t.getMessage());
+                                        mediaStream.videoTracks.get(0).removeSink(this);
                                     }
                                 }
                             }

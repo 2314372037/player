@@ -3,9 +3,9 @@ package com.zhanghao.player.hhplayer;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.ImageFormat;
+import android.graphics.Matrix;
 import android.graphics.Rect;
 import android.graphics.YuvImage;
-import android.util.Log;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
@@ -39,45 +39,75 @@ public class ImageUtils_hh {
         return BitmapFactory.decodeByteArray(tmp, 0, tmp.length);
     }
 
-    public static byte[] nv21Scale(byte[] nv21, int nv21Width, int nv21Height, int newWidth, int newHeight){
+    /**
+     * 根据给定的宽和高进行拉伸
+     *
+     * @param origin 原图
+     * @param newWidth 新图的宽
+     * @param newHeight 新图的高
+     * @return new Bitmap
+     */
+    private static Bitmap scaleBitmap(Bitmap origin, int newWidth, int newHeight,int rotation) {
+        if (origin == null) {
+            return null;
+        }
+        int height = origin.getHeight();
+        int width = origin.getWidth();
+        float scaleWidth = ((float) newWidth) / width;
+        float scaleHeight = ((float) newHeight) / height;
+        Matrix matrix = new Matrix();
+        matrix.preRotate(rotation);
+        matrix.preScale(scaleWidth, scaleHeight);// 使用后乘
+        Bitmap newBM = Bitmap.createBitmap(origin, 0, 0, width, height, matrix, false);
+        if (!origin.isRecycled()) {
+            origin.recycle();
+        }
+        return newBM;
+    }
+
+
+    public static byte[] nv21Scale(byte[] nv21, int nv21Width, int nv21Height, int newWidth, int newHeight,int rotation){
         Bitmap bitmap = nv21ToBitmap(nv21,nv21Width,nv21Height);
         if (bitmap!=null){
-            bitmap = Bitmap.createScaledBitmap(bitmap,newWidth,newHeight,false);//变换
-            int width = bitmap.getWidth();
-            int height = bitmap.getHeight();
-            //2.bitmap.getPixels()获取图片所有像素点数据，可以得到RGB数据的数组
-            int[] argb = new int[width * height];
-            bitmap.getPixels(argb, 0, width, 0, 0, width, height);
-            //3.根据RGB数组采样分别获取Y，U，V数组，并存储为NV21格式的数组
-            byte[] yuv = new byte[newWidth * newHeight * 3 / 2];
+            bitmap = scaleBitmap(bitmap,newWidth,newHeight,rotation);
+//            bitmap = Bitmap.createScaledBitmap(bitmap,newWidth,newHeight,false);//变换
+            if (bitmap!=null){
+                int width = bitmap.getWidth();
+                int height = bitmap.getHeight();
+                //2.bitmap.getPixels()获取图片所有像素点数据，可以得到RGB数据的数组
+                int[] argb = new int[width * height];
+                bitmap.getPixels(argb, 0, width, 0, 0, width, height);
+                //3.根据RGB数组采样分别获取Y，U，V数组，并存储为NV21格式的数组
+                byte[] yuv = new byte[width * height * 3 / 2];
 
-            int yIndex = 0;
-            int uvIndex = newWidth * newHeight;
-            int R, G, B, Y, U, V;
-            int index = 0;
-            for (int i = 0; i < newHeight; i++) {
-                for (int j = 0; j < newWidth; j++) {
-                    R = (argb[index] & 0xff0000) >> 16;
-                    G = (argb[index] & 0xff00) >> 8;
-                    B = argb[index] & 0xff;
+                int yIndex = 0;
+                int uvIndex = width * height;
+                int R, G, B, Y, U, V;
+                int index = 0;
+                for (int i = 0; i < height; i++) {
+                    for (int j = 0; j < width; j++) {
+                        R = (argb[index] & 0xff0000) >> 16;
+                        G = (argb[index] & 0xff00) >> 8;
+                        B = argb[index] & 0xff;
 
-                    Y = ((66 * R + 129 * G + 25 * B + 128) >> 8) + 16;
-                    U = ((-38 * R - 74 * G + 112 * B + 128) >> 8) + 128;
-                    V = ((112 * R - 94 * G - 18 * B + 128) >> 8) + 128;
+                        Y = ((66 * R + 129 * G + 25 * B + 128) >> 8) + 16;
+                        U = ((-38 * R - 74 * G + 112 * B + 128) >> 8) + 128;
+                        V = ((112 * R - 94 * G - 18 * B + 128) >> 8) + 128;
 
-                    yuv[yIndex++] = (byte) (Y);
+                        yuv[yIndex++] = (byte) (Y);
 
-                    //偶数行取U，基数行取V，并存储
-                    if (i % 2 == 0 && index % 2 == 0) {
-                        if (uvIndex+1<yuv.length){
-                            yuv[uvIndex++] = (byte) (V);
-                            yuv[uvIndex++] = (byte) (U);
+                        //偶数行取U，基数行取V，并存储
+                        if (i % 2 == 0 && index % 2 == 0) {
+                            if (uvIndex+1<yuv.length){
+                                yuv[uvIndex++] = (byte) (V);
+                                yuv[uvIndex++] = (byte) (U);
+                            }
                         }
+                        index++;
                     }
-                    index++;
                 }
+                return yuv;
             }
-            return yuv;
         }
         return null;
     }
