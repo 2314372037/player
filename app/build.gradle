@@ -35,8 +35,10 @@ android {
 }
 
 dependencies {
-    //implementation files('libs/YuvUtils-release.aar')
     implementation files('libs/stream-webrtc-android-release.aar')
+    implementation files('libs/ijkplayer-java-release.aar')
+    implementation files('libs/YuvUtils-release.aar')
+    implementation files('libs/yuv-tool-release.aar')
 
     implementation "org.jetbrains.kotlin:kotlin-stdlib:1.8.20"
     implementation 'androidx.core:core-ktx:1.10.0'

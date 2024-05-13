@@ -20,6 +20,8 @@ class MainActivity : AppCompatActivity() {
     lateinit var textureView: TextureView
     lateinit var surfaceView: SurfaceView
     private val playerTest by lazy { PlayerTest() }
+    private val playerTest2 by lazy { PlayerTest2() }
+    private lateinit var camera:Camera
 
     @SuppressLint("SetTextI18n")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -40,11 +42,10 @@ class MainActivity : AppCompatActivity() {
         button_camera = findViewById<Button>(R.id.button_camera)
         textureView = findViewById<TextureView>(R.id.textureView)
         surfaceView = findViewById<SurfaceView>(R.id.surfaceView)
-//        edit_url.setText("http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4")
-        //edit_url.setText("http://devimages.apple.com/iphone/samples/bipbop/bipbopall.m3u8")
+//        edit_url.setText("http://devimages.apple.com/iphone/samples/bipbop/bipbopall.m3u8")
 //        edit_url.setText("rtmp://ns8.indexforce.com/home/mystream")
-        //edit_url.setText("rtsp://wowzaec2demo.streamlock.net/vod/mp4:BigBuckBunny_115k.mp4")
-        edit_url.setText("webrtc://192.168.10.34/live/livestream")
+//        edit_url.setText("rtsp://wowzaec2demo.streamlock.net/vod/mp4:BigBuckBunny_115k.mp4")
+        edit_url.setText("rtmp://192.168.10.34/live/livestream")
         button_play.setOnClickListener {
 //            if (true){
 //                mediaPlayer = MediaPlayer()
@@ -54,12 +55,21 @@ class MainActivity : AppCompatActivity() {
 //                mediaPlayer.start()
 //                return@setOnClickListener
 //            }
-            playerTest.ori_holder = surfaceView.holder
-            playerTest.mSurfacetexture = textureView.surfaceTexture
-            playerTest.start(edit_url.text.toString(),this,textureView.width,textureView.height)
+//            playerTest.ori_holder = surfaceView.holder
+//            playerTest.mSurfacetexture = textureView.surfaceTexture
+//            playerTest.start(edit_url.text.toString(),this,textureView.width,textureView.height)
+            playerTest2.ori_holder = surfaceView.holder
+            playerTest2.mSurface = Surface(textureView.surfaceTexture)
+            playerTest2.ivPreview = findViewById<ImageView>(R.id.ivPreview)
+            playerTest2.start(edit_url.text.toString())
         }
         button_stop.setOnClickListener {
-            playerTest.stop()
+//            playerTest.stop()
+            playerTest2.stop()
+            if (this::camera.isInitialized){
+                camera.stopPreview()
+                camera.release()
+            }
         }
         button_camera.setOnClickListener {
             camera1()
@@ -68,17 +78,16 @@ class MainActivity : AppCompatActivity() {
 
     private fun camera1(){
         val ivPreview = findViewById<ImageView>(R.id.ivPreview)
-        val camera = Camera.open()
+        camera = Camera.open()
         camera.setPreviewTexture(textureView.surfaceTexture)
         camera.parameters?.let {
-            it.setPreviewSize(1920,1080)
+            it.setPreviewSize(1280,720)
             camera.parameters = it
         }
-        val par = camera?.getParameters()
+        val par = camera.getParameters()
         val size: Camera.Size = par!!.getPreviewSize() //获取预览大小
         val width: Int = size.width //宽度
         val height: Int = size.height
-        val rotation = par.get("rotation")
         camera.setPreviewCallback(object : Camera.PreviewCallback{
             override fun onPreviewFrame(data: ByteArray, camera: Camera?) {
                 val bitmap2 = ImageUtils_hh.nv21ToBitmap(data,width, height)
