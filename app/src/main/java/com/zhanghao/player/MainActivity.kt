@@ -4,10 +4,12 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.hardware.Camera
 import android.os.*
+import android.util.Log
 import android.view.*
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import com.yuv.tool.YuvTool
 import com.zhanghao.player.hhplayer.ImageUtils_hh
 
 
@@ -72,7 +74,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
         button_camera.setOnClickListener {
-            camera1()
+            camera2()
         }
     }
 
@@ -89,6 +91,55 @@ class MainActivity : AppCompatActivity() {
         val width: Int = size.width //宽度
         val height: Int = size.height
         camera.setPreviewCallback(object : Camera.PreviewCallback{
+            override fun onPreviewFrame(data: ByteArray, camera: Camera?) {
+                val bitmap2 = ImageUtils_hh.nv21ToBitmap(data,width, height)
+                runOnUiThread {
+                    ivPreview.setImageBitmap(bitmap2)
+                }
+            }
+        })
+        camera.startPreview()
+    }
+    private fun camera2(){
+        val ivPreview = findViewById<ImageView>(R.id.ivPreview)
+        camera = Camera.open()
+        camera.setPreviewTexture(textureView.surfaceTexture)
+        camera.parameters?.let {
+            it.setPreviewSize(1440,1080)
+            camera.parameters = it
+        }
+        val par = camera.getParameters()
+        val size: Camera.Size = par!!.getPreviewSize() //获取预览大小
+        val width: Int = size.width //宽度
+        val height: Int = size.height
+        val aaa = ByteArray(width*height*3/2)
+        camera.setDisplayOrientation(90)
+        camera.addCallbackBuffer(aaa)
+        camera.setPreviewCallbackWithBuffer(object : Camera.PreviewCallback{
+            override fun onPreviewFrame(data: ByteArray, camera: Camera?) {
+                val bitmap2 = ImageUtils_hh.nv21ToBitmap(data,width, height)
+                runOnUiThread {
+                    ivPreview.setImageBitmap(bitmap2)
+                }
+                camera?.addCallbackBuffer(aaa)
+            }
+        })
+        camera.startPreview()
+    }
+    private fun camera3(){
+        val ivPreview = findViewById<ImageView>(R.id.ivPreview)
+        camera = Camera.open()
+        camera.setPreviewTexture(textureView.surfaceTexture)
+        camera.parameters?.let {
+            it.setPreviewSize(1280,720)
+            camera.parameters = it
+        }
+        val par = camera.getParameters()
+        Log.d("调试",""+par.pictureSize)
+        val size: Camera.Size = par!!.getPreviewSize() //获取预览大小
+        val width: Int = size.width //宽度
+        val height: Int = size.height
+        camera.setOneShotPreviewCallback(object : Camera.PreviewCallback{
             override fun onPreviewFrame(data: ByteArray, camera: Camera?) {
                 val bitmap2 = ImageUtils_hh.nv21ToBitmap(data,width, height)
                 runOnUiThread {
