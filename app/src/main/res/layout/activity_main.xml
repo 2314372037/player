@@ -60,6 +60,7 @@
 
         <ImageView
             android:id="@+id/ivPreview"
+            android:background="@color/teal_700"
             android:layout_width="match_parent"
             android:layout_height="220dp" />
     </LinearLayout>

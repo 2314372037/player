@@ -1,11 +1,17 @@
 package com.zhanghao.player.hhplayer;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.ImageFormat;
 import android.graphics.Matrix;
 import android.graphics.Rect;
 import android.graphics.YuvImage;
+import android.renderscript.Allocation;
+import android.renderscript.Element;
+import android.renderscript.RenderScript;
+import android.renderscript.ScriptIntrinsicYuvToRGB;
+import android.renderscript.Type;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
@@ -37,6 +43,22 @@ public class ImageUtils_hh {
         byte[] tmp = jpegOutputStream.toByteArray();
         jpegOutputStream.reset();
         return BitmapFactory.decodeByteArray(tmp, 0, tmp.length);
+    }
+
+    public static Bitmap nv21ToBitmap2(Context context, byte[] nv21, int width, int height) {
+        RenderScript rs = RenderScript.create(context);
+        ScriptIntrinsicYuvToRGB yuvToRgbIntrinsic = ScriptIntrinsicYuvToRGB.create(rs, Element.U8_4(rs));
+        Type.Builder yuvType = null;
+        yuvType = (new Type.Builder(rs, Element.U8(rs))).setX(nv21.length);
+        Allocation in = Allocation.createTyped(rs, yuvType.create(), 1);
+        Type.Builder rgbaType = (new Type.Builder(rs, Element.RGBA_8888(rs))).setX(width).setY(height);
+        Allocation out = Allocation.createTyped(rs, rgbaType.create(), 1);
+        in.copyFrom(nv21);
+        yuvToRgbIntrinsic.setInput(in);
+        yuvToRgbIntrinsic.forEach(out);
+        Bitmap bmpout = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        out.copyTo(bmpout);
+        return bmpout;
     }
 
     /**

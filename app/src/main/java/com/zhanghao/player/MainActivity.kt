@@ -3,13 +3,18 @@ package com.zhanghao.player
 import android.Manifest
 import android.annotation.SuppressLint
 import android.hardware.Camera
-import android.os.*
+import android.os.Bundle
+import android.provider.Settings
+import android.telephony.TelephonyManager
 import android.util.Log
-import android.view.*
-import android.widget.*
+import android.view.SurfaceView
+import android.view.TextureView
+import android.widget.Button
+import android.widget.EditText
+import android.widget.ImageView
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
-import com.yuv.tool.YuvTool
 import com.zhanghao.player.hhplayer.ImageUtils_hh
 
 
@@ -21,6 +26,7 @@ class MainActivity : AppCompatActivity() {
     lateinit var button_camera: Button
     lateinit var textureView: TextureView
     lateinit var surfaceView: SurfaceView
+    lateinit var ivPreview: ImageView
     private val playerTest by lazy { PlayerTest() }
     private val playerTest2 by lazy { PlayerTest2() }
     private lateinit var camera:Camera
@@ -29,6 +35,12 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        val tm = getSystemService(TELEPHONY_SERVICE) as TelephonyManager
+        Log.d("调试","id:${Settings.Secure.getString(contentResolver,Settings.Secure.ANDROID_ID)}")
+        Log.d("调试","id:${Settings.System.getString(contentResolver,Settings.System.ANDROID_ID)}")
+        Log.d("调试","devicesid:${tm.deviceId}")
+        Log.d("调试","imei:${tm.imei}")
+
         val permission = arrayOf(
             Manifest.permission.CAMERA,
             Manifest.permission.READ_EXTERNAL_STORAGE,
@@ -44,6 +56,23 @@ class MainActivity : AppCompatActivity() {
         button_camera = findViewById<Button>(R.id.button_camera)
         textureView = findViewById<TextureView>(R.id.textureView)
         surfaceView = findViewById<SurfaceView>(R.id.surfaceView)
+        ivPreview = findViewById<ImageView>(R.id.ivPreview)
+        textureView.layoutParams?.let {
+            it.width = 960
+            it.height = 540
+            textureView.layoutParams = it
+        }
+        surfaceView.layoutParams?.let {
+            it.width = 960
+            it.height = 540
+            surfaceView.layoutParams = it
+        }
+        ivPreview.layoutParams?.let {
+            it.width = 960
+            it.height = 540
+            ivPreview.layoutParams = it
+        }
+
 //        edit_url.setText("http://devimages.apple.com/iphone/samples/bipbop/bipbopall.m3u8")
 //        edit_url.setText("rtmp://ns8.indexforce.com/home/mystream")
 //        edit_url.setText("rtsp://wowzaec2demo.streamlock.net/vod/mp4:BigBuckBunny_115k.mp4")
@@ -60,9 +89,9 @@ class MainActivity : AppCompatActivity() {
 //            playerTest.ori_holder = surfaceView.holder
 //            playerTest.mSurfacetexture = textureView.surfaceTexture
 //            playerTest.start(edit_url.text.toString(),this,textureView.width,textureView.height)
+            playerTest2.context = this.applicationContext
             playerTest2.ori_holder = surfaceView.holder
-            playerTest2.mSurface = Surface(textureView.surfaceTexture)
-            playerTest2.ivPreview = findViewById<ImageView>(R.id.ivPreview)
+            playerTest2.textureView = textureView
             playerTest2.start(edit_url.text.toString())
         }
         button_stop.setOnClickListener {
@@ -74,12 +103,11 @@ class MainActivity : AppCompatActivity() {
             }
         }
         button_camera.setOnClickListener {
-            camera2()
+            camera1()
         }
     }
 
     private fun camera1(){
-        val ivPreview = findViewById<ImageView>(R.id.ivPreview)
         camera = Camera.open()
         camera.setPreviewTexture(textureView.surfaceTexture)
         camera.parameters?.let {
@@ -101,11 +129,10 @@ class MainActivity : AppCompatActivity() {
         camera.startPreview()
     }
     private fun camera2(){
-        val ivPreview = findViewById<ImageView>(R.id.ivPreview)
         camera = Camera.open()
         camera.setPreviewTexture(textureView.surfaceTexture)
         camera.parameters?.let {
-            it.setPreviewSize(1440,1080)
+            it.setPreviewSize(1280,720)
             camera.parameters = it
         }
         val par = camera.getParameters()
@@ -113,7 +140,6 @@ class MainActivity : AppCompatActivity() {
         val width: Int = size.width //宽度
         val height: Int = size.height
         val aaa = ByteArray(width*height*3/2)
-        camera.setDisplayOrientation(90)
         camera.addCallbackBuffer(aaa)
         camera.setPreviewCallbackWithBuffer(object : Camera.PreviewCallback{
             override fun onPreviewFrame(data: ByteArray, camera: Camera?) {
@@ -127,7 +153,6 @@ class MainActivity : AppCompatActivity() {
         camera.startPreview()
     }
     private fun camera3(){
-        val ivPreview = findViewById<ImageView>(R.id.ivPreview)
         camera = Camera.open()
         camera.setPreviewTexture(textureView.surfaceTexture)
         camera.parameters?.let {
