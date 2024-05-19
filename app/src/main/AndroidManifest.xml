@@ -3,7 +3,9 @@
     package="com.zhanghao.player">
 
     <uses-permission android:name="android.permission.CAMERA" />
+
     <uses-feature android:name="android.hardware.camera" />
+
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
@@ -14,11 +16,14 @@
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
+        android:requestLegacyExternalStorage="true"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.播放器"
-        android:requestLegacyExternalStorage="true"
         android:usesCleartextTraffic="true">
+        <activity
+            android:name="com.zhanghao.Camera2Activity"
+            android:exported="false" />
         <activity
             android:name=".MainActivity"
             android:exported="true">

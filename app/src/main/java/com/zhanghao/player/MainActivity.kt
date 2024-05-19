@@ -2,6 +2,7 @@ package com.zhanghao.player
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.hardware.Camera
 import android.os.Bundle
 import android.provider.Settings
@@ -15,6 +16,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import com.zhanghao.Camera2Activity
 import com.zhanghao.player.hhplayer.ImageUtils_hh
 
 
@@ -24,6 +26,7 @@ class MainActivity : AppCompatActivity() {
     lateinit var button_play: Button
     lateinit var button_stop: Button
     lateinit var button_camera: Button
+    lateinit var button_camera2: Button
     lateinit var textureView: TextureView
     lateinit var surfaceView: SurfaceView
     lateinit var ivPreview: ImageView
@@ -54,6 +57,7 @@ class MainActivity : AppCompatActivity() {
         button_play = findViewById<Button>(R.id.button_play)
         button_stop = findViewById<Button>(R.id.button_stop)
         button_camera = findViewById<Button>(R.id.button_camera)
+        button_camera2 = findViewById<Button>(R.id.button_camera2)
         textureView = findViewById<TextureView>(R.id.textureView)
         surfaceView = findViewById<SurfaceView>(R.id.surfaceView)
         ivPreview = findViewById<ImageView>(R.id.ivPreview)
@@ -104,6 +108,10 @@ class MainActivity : AppCompatActivity() {
         }
         button_camera.setOnClickListener {
             camera1()
+        }
+        button_camera2.setOnClickListener {
+            val intent = Intent(this,Camera2Activity::class.java)
+            startActivity(intent)
         }
     }
 
