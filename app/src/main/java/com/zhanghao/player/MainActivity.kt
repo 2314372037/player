@@ -41,8 +41,6 @@ class MainActivity : AppCompatActivity() {
         val tm = getSystemService(TELEPHONY_SERVICE) as TelephonyManager
         Log.d("调试","id:${Settings.Secure.getString(contentResolver,Settings.Secure.ANDROID_ID)}")
         Log.d("调试","id:${Settings.System.getString(contentResolver,Settings.System.ANDROID_ID)}")
-        Log.d("调试","devicesid:${tm.deviceId}")
-        Log.d("调试","imei:${tm.imei}")
 
         val permission = arrayOf(
             Manifest.permission.CAMERA,
@@ -62,18 +60,18 @@ class MainActivity : AppCompatActivity() {
         surfaceView = findViewById<SurfaceView>(R.id.surfaceView)
         ivPreview = findViewById<ImageView>(R.id.ivPreview)
         textureView.layoutParams?.let {
-            it.width = 960
-            it.height = 540
+            it.width = 800
+            it.height = 600
             textureView.layoutParams = it
         }
         surfaceView.layoutParams?.let {
-            it.width = 960
-            it.height = 540
+            it.width = 800
+            it.height = 600
             surfaceView.layoutParams = it
         }
         ivPreview.layoutParams?.let {
-            it.width = 960
-            it.height = 540
+            it.width = 800
+            it.height = 600
             ivPreview.layoutParams = it
         }
 
@@ -101,10 +99,6 @@ class MainActivity : AppCompatActivity() {
         button_stop.setOnClickListener {
 //            playerTest.stop()
             playerTest2.stop()
-            if (this::camera.isInitialized){
-                camera.stopPreview()
-                camera.release()
-            }
         }
         button_camera.setOnClickListener {
             camera1()
@@ -116,10 +110,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun camera1(){
+        Log.d("调试","走camera1()方法")
         camera = Camera.open()
         camera.setPreviewTexture(textureView.surfaceTexture)
         camera.parameters?.let {
-            it.setPreviewSize(1280,720)
+            it.setPreviewSize(800,600)
             camera.parameters = it
         }
         val par = camera.getParameters()
@@ -137,10 +132,11 @@ class MainActivity : AppCompatActivity() {
         camera.startPreview()
     }
     private fun camera2(){
+        Log.d("调试","走camera2()方法")
         camera = Camera.open()
         camera.setPreviewTexture(textureView.surfaceTexture)
         camera.parameters?.let {
-            it.setPreviewSize(1280,720)
+            it.setPreviewSize(800,600)
             camera.parameters = it
         }
         val par = camera.getParameters()
@@ -156,28 +152,6 @@ class MainActivity : AppCompatActivity() {
                     ivPreview.setImageBitmap(bitmap2)
                 }
                 camera?.addCallbackBuffer(aaa)
-            }
-        })
-        camera.startPreview()
-    }
-    private fun camera3(){
-        camera = Camera.open()
-        camera.setPreviewTexture(textureView.surfaceTexture)
-        camera.parameters?.let {
-            it.setPreviewSize(1280,720)
-            camera.parameters = it
-        }
-        val par = camera.getParameters()
-        Log.d("调试",""+par.pictureSize)
-        val size: Camera.Size = par!!.getPreviewSize() //获取预览大小
-        val width: Int = size.width //宽度
-        val height: Int = size.height
-        camera.setOneShotPreviewCallback(object : Camera.PreviewCallback{
-            override fun onPreviewFrame(data: ByteArray, camera: Camera?) {
-                val bitmap2 = ImageUtils_hh.nv21ToBitmap(data,width, height)
-                runOnUiThread {
-                    ivPreview.setImageBitmap(bitmap2)
-                }
             }
         })
         camera.startPreview()
