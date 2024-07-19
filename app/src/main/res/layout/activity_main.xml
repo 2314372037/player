@@ -44,34 +44,62 @@
             android:layout_marginEnd="15dp"
             android:layout_marginBottom="15dp"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
             <Button
                 android:id="@+id/button_camera"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="相机预览" />
+                android:text="相机预览1" />
             <Button
                 android:id="@+id/button_camera2"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="15dp"
                 android:text="相机预览2" />
+            <Button
+                android:id="@+id/button_camera3"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="15dp"
+                android:text="Camera2" />
         </LinearLayout>
+
+        <View
+            android:background="#FF0000"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"/>
 
         <TextureView
             android:id="@+id/textureView"
             android:layout_width="match_parent"
             android:layout_height="220dp" />
 
+        <View
+            android:background="#FF0000"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"/>
+
         <SurfaceView
             android:id="@+id/surfaceView"
             android:layout_width="match_parent"
             android:layout_height="220dp" />
 
+        <View
+            android:background="#FF0000"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"/>
+
         <ImageView
             android:id="@+id/ivPreview"
             android:background="@color/teal_700"
+            android:scaleType="center"
             android:layout_width="match_parent"
             android:layout_height="220dp" />
+
+        <View
+            android:background="#FF0000"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"/>
     </LinearLayout>
 </ScrollView>

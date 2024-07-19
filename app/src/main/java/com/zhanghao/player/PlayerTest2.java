@@ -15,6 +15,9 @@ import android.widget.ImageView;
 import com.yuv.tool.YuvTool;
 import com.zhanghao.player.hhplayer.ImageUtils_hh;
 
+import java.util.Timer;
+import java.util.TimerTask;
+
 import tv.danmaku.ijk.media.player.IMediaPlayer;
 import tv.danmaku.ijk.media.player.IjkMediaPlayer;
 
@@ -23,7 +26,21 @@ public class PlayerTest2 {
     public TextureView textureView;
     public IjkMediaPlayer ijkMediaPlayer3;
     public Context context;
+
+    private Timer timer;
     public void start(String path){
+        timer = new Timer();
+        timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+
+            }
+        },1000,2000);
+        timer.cancel();
+
+
+
+
         try {
             if (ijkMediaPlayer3==null){
                 ijkMediaPlayer3 = new IjkMediaPlayer();

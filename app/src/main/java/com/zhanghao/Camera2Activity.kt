@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.ImageFormat
+import android.graphics.PixelFormat
 import android.hardware.camera2.CameraAccessException
 import android.hardware.camera2.CameraCaptureSession
 import android.hardware.camera2.CameraDevice
@@ -38,7 +39,9 @@ class Camera2Activity : AppCompatActivity() {
         findViewById<View>(R.id.button).setOnClickListener {
             camera2()
         }
-        findViewById<View>(R.id.button2).setOnClickListener { }
+        findViewById<View>(R.id.button2).setOnClickListener {
+
+        }
     }
 
     private fun camera2(){
@@ -46,17 +49,14 @@ class Camera2Activity : AppCompatActivity() {
         val mImageReader = ImageReader.newInstance(
             1280,
             720,
-            ImageFormat.YUV_420_888,
+            PixelFormat.RGBX_8888,
             10
         )
 
         // 设置图像读取器的图像可用监听器，一旦捕捉到图像数据就会触发监听器的onImageAvailable方法
         mImageReader.setOnImageAvailableListener(ImageReader.OnImageAvailableListener { reader ->
             val image = reader.acquireNextImage()
-            if (image!=null){
-                Log.d("调试", "刷新")
-                image.close()
-            }
+            image?.close()
         }, Handler())
 
         val cameraManager = getSystemService(Context.CAMERA_SERVICE) as CameraManager

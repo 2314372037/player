@@ -3,17 +3,21 @@ package com.zhanghao.player
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.graphics.Color
 import android.hardware.Camera
+import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.telephony.TelephonyManager
 import android.util.Log
+import android.view.Surface
 import android.view.SurfaceView
 import android.view.TextureView
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import com.zhanghao.Camera2Activity
@@ -27,12 +31,39 @@ class MainActivity : AppCompatActivity() {
     lateinit var button_stop: Button
     lateinit var button_camera: Button
     lateinit var button_camera2: Button
+    lateinit var button_camera3: Button
     lateinit var textureView: TextureView
     lateinit var surfaceView: SurfaceView
     lateinit var ivPreview: ImageView
     private val playerTest by lazy { PlayerTest() }
     private val playerTest2 by lazy { PlayerTest2() }
     private lateinit var camera:Camera
+
+    fun getPseudoID(): String {
+        val MODULUS = 10
+        val sb = StringBuilder()
+        sb.append(Build.BOARD.length % MODULUS)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            sb.append(Build.SUPPORTED_ABIS.contentDeepToString().length % MODULUS)
+        } else {
+            // noinspection deprecation
+            sb.append(Build.CPU_ABI.length % MODULUS)
+        }
+        sb.append(Build.DEVICE.length % MODULUS)
+        sb.append(Build.DISPLAY.length % MODULUS)
+        sb.append(Build.HOST.length % MODULUS)
+        sb.append(Build.ID.length % MODULUS)
+        sb.append(Build.MANUFACTURER.length % MODULUS)
+        sb.append(Build.BRAND.length % MODULUS)
+        sb.append(Build.MODEL.length % MODULUS)
+        sb.append(Build.PRODUCT.length % MODULUS)
+        sb.append(Build.BOOTLOADER.length % MODULUS)
+        sb.append(Build.HARDWARE.length % MODULUS)
+        sb.append(Build.TAGS.length % MODULUS)
+        sb.append(Build.TYPE.length % MODULUS)
+        sb.append(Build.USER.length % MODULUS)
+        return sb.toString()
+    }
 
     @SuppressLint("SetTextI18n")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -41,6 +72,9 @@ class MainActivity : AppCompatActivity() {
         val tm = getSystemService(TELEPHONY_SERVICE) as TelephonyManager
         Log.d("调试","id:${Settings.Secure.getString(contentResolver,Settings.Secure.ANDROID_ID)}")
         Log.d("调试","id:${Settings.System.getString(contentResolver,Settings.System.ANDROID_ID)}")
+        getPseudoID()
+
+
 
         val permission = arrayOf(
             Manifest.permission.CAMERA,
@@ -56,6 +90,7 @@ class MainActivity : AppCompatActivity() {
         button_stop = findViewById<Button>(R.id.button_stop)
         button_camera = findViewById<Button>(R.id.button_camera)
         button_camera2 = findViewById<Button>(R.id.button_camera2)
+        button_camera3 = findViewById<Button>(R.id.button_camera3)
         textureView = findViewById<TextureView>(R.id.textureView)
         surfaceView = findViewById<SurfaceView>(R.id.surfaceView)
         ivPreview = findViewById<ImageView>(R.id.ivPreview)
@@ -104,7 +139,10 @@ class MainActivity : AppCompatActivity() {
             camera1()
         }
         button_camera2.setOnClickListener {
-            val intent = Intent(this,Camera2Activity::class.java)
+            camera2()
+        }
+        button_camera3.setOnClickListener {
+            val intent = Intent(this, Camera2Activity::class.java)
             startActivity(intent)
         }
     }
@@ -114,7 +152,7 @@ class MainActivity : AppCompatActivity() {
         camera = Camera.open()
         camera.setPreviewTexture(textureView.surfaceTexture)
         camera.parameters?.let {
-            it.setPreviewSize(800,600)
+            it.setPreviewSize(640,480)
             camera.parameters = it
         }
         val par = camera.getParameters()
@@ -131,12 +169,13 @@ class MainActivity : AppCompatActivity() {
         })
         camera.startPreview()
     }
+
     private fun camera2(){
         Log.d("调试","走camera2()方法")
         camera = Camera.open()
-        camera.setPreviewTexture(textureView.surfaceTexture)
+        camera.setPreviewDisplay(surfaceView.holder)
         camera.parameters?.let {
-            it.setPreviewSize(800,600)
+            it.setPreviewSize(640,480)
             camera.parameters = it
         }
         val par = camera.getParameters()
