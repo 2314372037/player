@@ -22,6 +22,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import com.zhanghao.Camera2Activity
 import com.zhanghao.player.hhplayer.ImageUtils_hh
+import org.videolan.libvlc.LibVLC
+import org.videolan.libvlc.MediaPlayer
 
 
 class MainActivity : AppCompatActivity() {
@@ -113,7 +115,9 @@ class MainActivity : AppCompatActivity() {
 //        edit_url.setText("http://devimages.apple.com/iphone/samples/bipbop/bipbopall.m3u8")
 //        edit_url.setText("rtmp://ns8.indexforce.com/home/mystream")
 //        edit_url.setText("rtsp://wowzaec2demo.streamlock.net/vod/mp4:BigBuckBunny_115k.mp4")
-        edit_url.setText("rtmp://192.168.10.34/live/livestream")
+//        edit_url.setText("rtmp://192.168.10.34/live/livestream")
+//        edit_url.setText("http://192.168.1.7:1985/rtc/v1/whep/?app=live&stream=livestreamefed3924679f4689&codec=av1")
+        edit_url.setText("/sdcard/2.mp4")
         button_play.setOnClickListener {
 //            if (true){
 //                mediaPlayer = MediaPlayer()
@@ -123,11 +127,15 @@ class MainActivity : AppCompatActivity() {
 //                mediaPlayer.start()
 //                return@setOnClickListener
 //            }
+//            val libVLC = LibVLC(this)
+//            val mediaPlayer = MediaPlayer(libVLC)
+//            val aspectRatio = mediaPlayer.getAspectRatio() as String
+//            val width = mediaPlayer.getCurrentVideoTrack()?.width
+//            val height = mediaPlayer.getCurrentVideoTrack()?.height
+
 //            playerTest.ori_holder = surfaceView.holder
 //            playerTest.mSurfacetexture = textureView.surfaceTexture
 //            playerTest.start(edit_url.text.toString(),this,textureView.width,textureView.height)
-            playerTest2.context = this.applicationContext
-            playerTest2.ori_holder = surfaceView.holder
             playerTest2.textureView = textureView
             playerTest2.start(edit_url.text.toString())
         }

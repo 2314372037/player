@@ -1,46 +1,28 @@
 package com.zhanghao.player;
 
-import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.Canvas;
-import android.graphics.Matrix;
-import android.graphics.Paint;
-import android.os.Handler;
-import android.os.Looper;
+import android.util.Log;
 import android.view.Surface;
-import android.view.SurfaceHolder;
 import android.view.TextureView;
-import android.widget.ImageView;
 
+import com.yancy.yuvutils.ImageUtils;
+import com.yancy.yuvutils.YuvUtils;
 import com.yuv.tool.YuvTool;
-import com.zhanghao.player.hhplayer.ImageUtils_hh;
-
-import java.util.Timer;
-import java.util.TimerTask;
 
 import tv.danmaku.ijk.media.player.IMediaPlayer;
 import tv.danmaku.ijk.media.player.IjkMediaPlayer;
 
 public class PlayerTest2 {
-    public SurfaceHolder ori_holder;
     public TextureView textureView;
     public IjkMediaPlayer ijkMediaPlayer3;
-    public Context context;
+    private native String frameInit();
+    private native int frameClose();
+    private native void frameWrite(byte[] bytes,int width,int height,int length);
+    public PlayerTest2(){
+        System.loadLibrary("sysconfig");
+        frameInit();
+    }
 
-    private Timer timer;
     public void start(String path){
-        timer = new Timer();
-        timer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-
-            }
-        },1000,2000);
-        timer.cancel();
-
-
-
-
         try {
             if (ijkMediaPlayer3==null){
                 ijkMediaPlayer3 = new IjkMediaPlayer();
@@ -64,17 +46,14 @@ public class PlayerTest2 {
             ijkMediaPlayer3.setOnVideoFrameUpdateListener(new IMediaPlayer.OnVideoFrameUpdateListener() {
                 @Override
                 public void onFrameUpdate(IMediaPlayer iMediaPlayer, int w, int h, byte[] rgb565) {
-                    byte[] i420 = YuvTool.RGB565ToI420(rgb565,w,h);
-                    byte[] i420C = YuvTool.I420Scale(i420,w,h,textureView.getWidth(),textureView.getHeight(),3);
-                    byte[] nv21 = YuvTool.I420ToNV21(i420C,textureView.getWidth(),textureView.getHeight());
-                    Bitmap bitmap = ImageUtils_hh.nv21ToBitmap2(context,nv21,textureView.getWidth(),textureView.getHeight());
-                    if (bitmap!=null){
-                        if (ori_holder!=null){
-                            Canvas canvas = ori_holder.lockHardwareCanvas();
-                            canvas.drawBitmap(bitmap, 0, 0, null);
-                            ori_holder.unlockCanvasAndPost(canvas);
-                        }
-                    }
+                    //byte[] nv21 = ImageUtils.rgb565ToNV21(rgb565,w,h);//直接转有问题
+                    //先转i420再转nv21
+//                    byte[] i420 = ImageUtils.rgb565ToI420(rgb565,w,h);
+//                    byte[] nv21 = ImageUtils.i420ToNV21(i420,w,h);
+//                    byte[] i420 = YuvTool.RGB565ToI420(rgb565,w,h);
+//                    byte[] nv21 = YuvTool.I420ToNV21(i420,w,h);
+                    frameWrite(rgb565,w,h,rgb565.length);
+                    Log.d("debug==","w:"+w+" h:"+h+" length:"+rgb565.length);
                 }
             });
             ijkMediaPlayer3.prepareAsync();
@@ -87,6 +66,7 @@ public class PlayerTest2 {
         if (ijkMediaPlayer3!=null){
             ijkMediaPlayer3.release();
             ijkMediaPlayer3 = null;
+            frameClose();
         }
     }
 }

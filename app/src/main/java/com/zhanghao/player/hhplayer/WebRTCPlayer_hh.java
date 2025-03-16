@@ -14,23 +14,26 @@ import org.webrtc.PeerConnection;
 import org.webrtc.PeerConnectionFactory;
 import org.webrtc.RtpTransceiver;
 import org.webrtc.SessionDescription;
+import org.webrtc.VideoCodecInfo;
 import org.webrtc.VideoFrame;
 import org.webrtc.VideoSink;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.function.Predicate;
 
 public class WebRTCPlayer_hh {
     private String URL = "";
-    private String sdpRequestSource = "";
+//    private String sdpRequestSource = "";
     private PeerConnection peerConnection;
     private PeerConnectionFactory peerConnectionFactory;
 
     public void setDataSource(String source) {
         URL = source;
-        String s1 = source.substring(source.indexOf("//") + 2);
-        String ipString = s1.substring(0, s1.indexOf("/"));
-        sdpRequestSource = "http://" + ipString + ":1985/rtc/v1/play/";
+//        String s1 = source.substring(source.indexOf("//") + 2);
+//        String ipString = s1.substring(0, s1.indexOf("/"));
+//        sdpRequestSource = "http://" + ipString + ":1985/rtc/v1/play/";
     }
 
     public interface OnVideoFrameUpdateListener {
@@ -44,7 +47,19 @@ public class WebRTCPlayer_hh {
                 .createInitializationOptions());
 
         //需要在PeerConnectionFactory初始化之后
-        DefaultVideoDecoderFactory decoderFactory = new DefaultVideoDecoderFactory(EglBase.create().getEglBaseContext());
+        DefaultVideoDecoderFactory decoderFactory = new DefaultVideoDecoderFactory(EglBase.create().getEglBaseContext()){
+            @Override
+            public VideoCodecInfo[] getSupportedCodecs() {
+                VideoCodecInfo[] codec = super.getSupportedCodecs();
+                VideoCodecInfo[] newCodec = Arrays.stream(codec).filter(new Predicate<VideoCodecInfo>() {
+                    @Override
+                    public boolean test(VideoCodecInfo videoCodecInfo) {
+                        return videoCodecInfo.name.equals("AV1");
+                    }
+                }).toArray(VideoCodecInfo[]::new);
+                return newCodec;
+            }
+        };
 
         peerConnectionFactory = PeerConnectionFactory.builder()
                 .setVideoDecoderFactory(decoderFactory)
@@ -62,6 +77,8 @@ public class WebRTCPlayer_hh {
                             @Override
                             public void onFrame(VideoFrame videoFrame) {
                                 if (videoFrame != null) {
+                                    System.out.println("字节:"+videoFrame.getBuffer().toI420().getDataY().get(0));
+
                                     try{
                                         VideoFrame.I420Buffer buffer = videoFrame.getBuffer().toI420();
                                         if (buffer == null) {
@@ -116,23 +133,10 @@ public class WebRTCPlayer_hh {
                         if (sessionDescription.type == SessionDescription.Type.OFFER) {
                             String offerSdp = sessionDescription.description;
                             peerConnection.setLocalDescription(new SdpAdapter_hh("setLocalDescription"), sessionDescription);
-
-                            JSONObject requestJson = new JSONObject();
-                            try {
-                                requestJson.put("sdp", offerSdp);
-                                requestJson.put("streamurl", URL);
-                            } catch (JSONException e) {
-                                return;
-                            }
-                            String result = MyHttpRequest_hh.sendPost(sdpRequestSource, requestJson.toString());
+                            String result = MyHttpRequest_hh.sendPost(URL, offerSdp);
                             if (result != null && !result.isEmpty()) {
-                                String sdp = null;
-                                try {
-                                    sdp = new JSONObject(result).getString("sdp");
-                                } catch (JSONException e) {
-                                    return;
-                                }
-                                SessionDescription remoteSdp = new SessionDescription(SessionDescription.Type.ANSWER, sdp);
+                                System.out.println(result);
+                                SessionDescription remoteSdp = new SessionDescription(SessionDescription.Type.ANSWER, result);
                                 peerConnection.setRemoteDescription(new SdpAdapter_hh("setRemoteDescription"), remoteSdp);
                             }
                         }

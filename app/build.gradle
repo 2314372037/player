@@ -13,8 +13,31 @@ android {
         targetSdkVersion 29
         versionCode 1
         versionName "1.0"
+        externalNativeBuild {
+            cmake {
+                cppFlags ''
+            }
+        }
         ndk {
             abiFilters 'armeabi-v7a','arm64-v8a'
+        }
+    }
+
+    signingConfigs {
+        debug {
+            storeFile file("platform.jks")
+            storePassword "pwmttatj"
+            keyAlias "zhanghao"
+            keyPassword "pwmttatj"
+            v2SigningEnabled true
+        }
+
+        release {
+            storeFile file("platform.jks")
+            storePassword "pwmttatj"
+            keyAlias "zhanghao"
+            keyPassword "pwmttatj"
+            v2SigningEnabled true
         }
     }
 
@@ -32,6 +55,12 @@ android {
         jniLibs.srcDirs 'src/main/libs'
         jni.srcDirs = [] // This prevents the auto generation of Android.mk
     }
+    externalNativeBuild {
+        cmake {
+            path file('src/main/cpp/CMakeLists.txt')
+            version '3.22.1'
+        }
+    }
 }
 
 dependencies {
@@ -46,6 +75,7 @@ dependencies {
     implementation 'com.google.android.material:material:1.8.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation 'androidx.activity:activity:1.8.0'
+    implementation 'org.videolan.android:libvlc-all:3.6.0-eap14'
 
 //    implementation project(path: ':FFmpegSdk')
 }

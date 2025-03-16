@@ -48,10 +48,6 @@ public class PlayerTest {
                 mSurface = new Surface(mSurfacetexture);
             }
         }
-        if (!path.startsWith("webrtc://")) {
-            Log.d("调试", "path不是一个webrtc://地址");
-            return;
-        }
         webRTCPlayer.setDataSource(path);
 
         int rotation = 0;
