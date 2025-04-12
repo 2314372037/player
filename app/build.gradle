@@ -9,7 +9,7 @@ android {
 
     defaultConfig {
         applicationId "com.zhanghao.player"
-        minSdkVersion 27
+        minSdkVersion 28
         targetSdkVersion 29
         versionCode 1
         versionName "1.0"
@@ -60,6 +60,9 @@ android {
             path file('src/main/cpp/CMakeLists.txt')
             version '3.22.1'
         }
+    }
+    buildFeatures{
+        aidl true
     }
 }
 

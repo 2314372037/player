@@ -33,6 +33,7 @@ public class PlayerTest2 {
             ijkMediaPlayer3.setDataSource(path);
             ijkMediaPlayer3.setVolume(0f,0f);
             ijkMediaPlayer3.setLooping(true);
+            ijkMediaPlayer3.setLogEnabled(true);
             ijkMediaPlayer3.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "opensles", 0);
             ijkMediaPlayer3.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "framedrop", 1L);
             ijkMediaPlayer3.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "start-on-prepared", 1);

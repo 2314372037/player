@@ -2,28 +2,26 @@ package com.zhanghao.player
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.ESIMManager
 import android.content.Intent
-import android.graphics.Color
+import android.graphics.Point
 import android.hardware.Camera
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.telephony.TelephonyManager
 import android.util.Log
-import android.view.Surface
 import android.view.SurfaceView
 import android.view.TextureView
+import android.view.WindowManager
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
 import android.widget.TextView
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import com.zhanghao.Camera2Activity
 import com.zhanghao.player.hhplayer.ImageUtils_hh
-import org.videolan.libvlc.LibVLC
-import org.videolan.libvlc.MediaPlayer
 
 
 class MainActivity : AppCompatActivity() {
@@ -118,6 +116,7 @@ class MainActivity : AppCompatActivity() {
 //        edit_url.setText("rtmp://192.168.10.34/live/livestream")
 //        edit_url.setText("http://192.168.1.7:1985/rtc/v1/whep/?app=live&stream=livestreamefed3924679f4689&codec=av1")
         edit_url.setText("/sdcard/2.mp4")
+        edit_url.setText("rtmp://liteavapp.qcloud.com/live/liteavdemoplayerstreamid")
         button_play.setOnClickListener {
 //            if (true){
 //                mediaPlayer = MediaPlayer()
@@ -136,8 +135,27 @@ class MainActivity : AppCompatActivity() {
 //            playerTest.ori_holder = surfaceView.holder
 //            playerTest.mSurfacetexture = textureView.surfaceTexture
 //            playerTest.start(edit_url.text.toString(),this,textureView.width,textureView.height)
-            playerTest2.textureView = textureView
-            playerTest2.start(edit_url.text.toString())
+//            playerTest2.textureView = textureView
+//            playerTest2.start(edit_url.text.toString())
+
+            ///val aa = ijkPlayerManager(this,textureView,edit_url.text.toString(),"fill")
+
+
+//            val euiccManager = getSystemService(Context.EUICC_SERVICE) as EuiccManager
+//            val a = euiccManager.euiccInfo
+//            val eid = euiccManager.eid
+//            val ena = euiccManager.isEnabled
+
+//            val phoneNumber = "10086"
+//            val intent = Intent(
+//                Intent.ACTION_CALL, Uri.parse(
+//                    "tel:$phoneNumber"
+//                )
+//            )
+//            startActivity(intent)
+//            val esimManager = getSystemService("esim") as ESIMManager
+//            esimManager.addCard("aaaaa","bbbbbb","cc","ddd","eee")
+//            Log.d("调试","播放")
         }
         button_stop.setOnClickListener {
 //            playerTest.stop()
